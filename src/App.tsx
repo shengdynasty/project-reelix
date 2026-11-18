@@ -79,6 +79,8 @@ export default function App() {
   const [forced2d, setForced2d] = useState(false)
   const want3d = settings.visuals3d ?? device.default3d
   const mode = forced2d ? '2d' : renderMode(want3d, supported)
+  const modeRef = useRef(mode)
+  modeRef.current = mode
   const [stage, setStage] = useState<StageHandle | null>(null)
   const stageRef = useRef(stage)
   stageRef.current = stage
@@ -313,6 +315,16 @@ export default function App() {
         setStatus({ phase: 'planning', message: ai ? `Writing the script with ${ai} on this computer` : 'Writing the script' })
         const result = await planAuto({ prompt, corpus, detail: s.detail }, ai, ctrl.signal)
         if (id !== genRef.current) return
+        // Online photos only show on the 3D stage, and only for text that came from a Wikipedia article.
+        if (s.lookup && corpus.article && modeRef.current === '3d') {
+          setStatus({ phase: 'planning', message: 'Finding photos' })
+          const { attachPhotos } = await import('./photos')
+          const searchScenes = corpus.docs.every((d) => d.kind === 'wiki')
+          const found = await attachPhotos(result.storyboard, { article: corpus.article, searchScenes, signal: ctrl.signal })
+          if (id !== genRef.current) return
+          result.storyboard = found.storyboard
+          corpus.images.push(...found.images)
+        }
         setImages(new Map(corpus.images.map((img) => [img.id, img.bitmap])))
         setSources(result.storyboard.sources)
         setStoryboard(result.storyboard)

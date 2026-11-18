@@ -166,6 +166,7 @@ export async function buildCorpus(opts: BuildOptions): Promise<Corpus> {
         if (wiki) {
           corpus.docs.push(wiki.doc)
           corpus.sources.push({ label: `Wikipedia: ${wiki.title}`, url: wiki.url })
+          corpus.article = wiki.title
           // Your own pictures come first; the article's lead image is only added when there are none.
           if (wiki.image && !corpus.images.length) corpus.images.push({ id: imgId(), name: wiki.image.caption, caption: wiki.image.caption, bitmap: wiki.image.bitmap })
         } else if (!corpusWords(corpus) && !corpus.tables.length) {

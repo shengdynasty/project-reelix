@@ -107,6 +107,8 @@ export const SceneSchema = z.object({
   visual: VisualSchema,
   /** 0..1. When the narration runs past 60 s the lowest priority body scenes are skipped first. */
   priority: z.number(),
+  /** An online photo the 3D piece shows as its hero, with the credit line drawn while it is on screen. */
+  photo: z.object({ imageId: z.string(), credit: z.string() }).optional(),
 })
 export type Scene = z.infer<typeof SceneSchema>
 

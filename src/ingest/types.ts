@@ -38,6 +38,8 @@ export interface Corpus {
   images: IngestedImage[]
   sources: Source[]
   warnings: string[]
+  /** The Wikipedia article title the text was filled in from, if any. */
+  article?: string
 }
 
 export function newSection(heading = '', level = 1): Section {
