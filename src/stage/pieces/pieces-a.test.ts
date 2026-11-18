@@ -100,6 +100,26 @@ describe('set pieces A: title', () => {
   })
 })
 
+describe('set pieces A: scene photos', () => {
+  const sb = fixtureStoryboard()
+  const withPhoto = (id: string) => ({ ...sb.scenes.find((x) => x.id === id)!, photo: { imageId: 'web1', credit: 'Photo: Jane Doe, CC BY 4.0' } })
+  it('shows the photo of a definition scene as its hero, with the term and label under it', () => {
+    const at = sb.scenes.findIndex((x) => x.id === 'definition')
+    const p = pieceOf(planWith(withPhoto('definition'), at), 'definition')
+    const hero = heroOf(p)
+    expect(hero.data).toMatchObject({ kind: 'photo', imageId: 'web1' })
+    labels(p).forEach((a) => expect(a.at[1]).toBeLessThan(hero.at[1] - 1.5))
+  })
+  it('keeps the icon when the photo did not load', () => {
+    const at = sb.scenes.findIndex((x) => x.id === 'definition')
+    expect(heroOf(pieceOf(planWith(withPhoto('definition'), at), 'definition', () => false)).data.kind).toBe('icon')
+  })
+  it("opens on the title scene's own photo", () => {
+    const at = sb.scenes.findIndex((x) => x.id === 'title')
+    expect(heroOf(pieceOf(planWith(withPhoto('title'), at), 'intro')).data).toMatchObject({ kind: 'photo', imageId: 'web1' })
+  })
+})
+
 describe('set pieces A: definition', () => {
   const p = piece('definition')
   const shot = shotsOf(p)[0]

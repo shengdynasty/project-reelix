@@ -567,4 +567,14 @@ describe('set pieces B: framing with label extents', () => {
       expect(outside(p)).toEqual([])
     }
   })
+  it('definition: keeps a photo hero and its labels inside the frame at every key', () => {
+    const at = sceneIndex('definition')
+    const scene = { ...fixtureStoryboard().scenes[at], photo: { imageId: 'web1', credit: 'Photo: Jane Doe, CC BY 4.0' } }
+    const p = pieceOf(planWith(scene, at), 'definition')
+    const hero = p.actors.find((a) => a.id === p.heroId)!
+    expect(hero.data.kind).toBe('photo')
+    const photoCorners = box(sum(p.origin, hero.at), 2.25, 1.5).map((c, i) => ({ name: `photo#${i}`, at: c }))
+    expect(outside(p, [...framePoints(p), ...photoCorners])).toEqual([])
+  })
 })
+

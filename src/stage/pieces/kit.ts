@@ -59,6 +59,9 @@ export function pictureHero(ctx: PieceContext, imageId: string | undefined, icon
   return iconActor(ctx, 'icon', 0, icon, at, HERO_SCALE, [enter(t)])
 }
 
+/** The scene's own online photo when it loaded, for pictureHero. */
+export const scenePhoto = (ctx: PieceContext): string | undefined => (ctx.scene.photo && ctx.hasImage(ctx.scene.photo.imageId) ? ctx.scene.photo.imageId : undefined)
+
 /** Half the height of a hero made by pictureHero. */
 export const pictureHalfHeight = (hero: ActorSpec) => (hero.data.kind === 'photo' ? PHOTO_HEIGHT / 2 : HERO_SCALE / 2)
 

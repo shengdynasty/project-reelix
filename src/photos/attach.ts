@@ -1,4 +1,4 @@
-// Gives a storyboard's single-hero scenes (definition, stat) online photos: candidates from the Wikipedia article the
+// Gives a storyboard's single-hero scenes (the title and definitions) online photos: candidates from the Wikipedia article the
 // video already used, then Commons and Openverse searches for scenes still without one, assigned within the video's
 // budget, decoded, and credited both on the scene and in the sources list.
 import type { IngestedImage } from '../ingest/types'
@@ -9,7 +9,7 @@ import { assignPhotos, scorePhoto, type PhotoCandidate } from './select'
 import { articlePhotos, commonsPhotos, openversePhotos } from './source'
 
 /** Scenes whose 3D piece shows one hero object, which a photo can replace. */
-const ELIGIBLE = new Set<Scene['visual']['kind']>(['definition', 'stat'])
+const ELIGIBLE = new Set<Scene['visual']['kind']>(['title', 'definition'])
 /** Whatever is decoded by then is used; the video never waits longer for photos. */
 const TIMEOUT_MS = 8000
 /** Searches per source, so a long video stays well inside Openverse's 20 requests a minute. */
@@ -33,11 +33,12 @@ async function loadBitmap(url: string, signal?: AbortSignal): Promise<ImageBitma
   return createImageBitmap(await res.blob())
 }
 
-/** What to search for a scene: the defined term, or the label its sentence would get. */
+/** What to search for a scene: the defined term, the title, or the label its sentence would get. */
 function phraseOf(scene: Scene, topicWords: string[]): string {
   const v = scene.visual
   if (v.kind === 'definition') return v.term
-  return labelFor(scene.narration, topicWords) ?? (v.kind === 'stat' ? v.label : scene.narration)
+  if (v.kind === 'title') return v.title
+  return labelFor(scene.narration, topicWords) ?? scene.narration
 }
 
 export async function attachPhotos(sb: Storyboard, opts: AttachOptions): Promise<{ storyboard: Storyboard; images: IngestedImage[] }> {

@@ -103,6 +103,26 @@ export function drawChapter(ctx: CanvasRenderingContext2D, theme: Theme, plan: M
   ctx.restore()
 }
 
+/** The credit of the online photo on screen at t: its scene is playing and its pixels loaded. */
+export function creditFor(plan: MotionPlan, t: number, images: Map<string, unknown>): string | null {
+  const k = shotAt(plan, t)
+  const photo = k < 0 ? undefined : plan.storyboard.scenes[plan.shots[k].scene].photo
+  return photo && images.has(photo.imageId) ? photo.credit : null
+}
+
+/** A small credit line in the bottom right corner while an online photo is on screen (3D frames only). */
+export function drawCredit(ctx: CanvasRenderingContext2D, theme: Theme, plan: MotionPlan, t: number, images: Map<string, unknown>) {
+  const credit = creditFor(plan, t, images)
+  if (!credit) return
+  font(ctx, 22, 500, MONO)
+  ctx.save()
+  ctx.fillStyle = theme.muted
+  ctx.textAlign = 'right'
+  ctx.textBaseline = 'alphabetic'
+  ctx.fillText(credit, 1848, 1050)
+  ctx.restore()
+}
+
 /** Fade to the background color over the last half second. */
 export function drawFadeOut(ctx: CanvasRenderingContext2D, theme: Theme, plan: MotionPlan, t: number) {
   const k = clamp01((t - (plan.total - 600)) / 600)

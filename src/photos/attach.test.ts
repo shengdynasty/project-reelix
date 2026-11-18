@@ -17,7 +17,7 @@ const photo = (n: number, over: Partial<PhotoCandidate> = {}): PhotoCandidate =>
   width: 1600,
   height: 1000,
   title: `Diffuse sky radiation over the sea ${n}`,
-  description: 'Sunlight scattered by molecules in the atmosphere, visible light',
+  description: 'Sunlight scattered by molecules in the atmosphere makes the sky look blue',
   artist: `Artist ${n}`,
   license: 'CC BY-SA 4.0',
   source: `https://commons.wikimedia.org/wiki/File:${n}.jpg`,
@@ -39,14 +39,14 @@ describe('attachPhotos', () => {
     expect(out.storyboard).toEqual(sb)
     expect(out.images).toEqual([])
   })
-  it('puts a photo on the definition and stat scenes with a credit line, and lists each credit in the sources', async () => {
+  it('puts a photo on the title and definition scenes with a credit line, and lists each credit in the sources', async () => {
     sources([photo(1), photo(2)])
     const out = await attachPhotos(fixtureStoryboard(), { article: 'Diffuse sky radiation', searchScenes: true, load })
     const def = sceneOf(out.storyboard, 'definition').photo!
     expect(def.credit).toMatch(/^Photo: Artist \d, CC BY-SA 4\.0$/)
-    expect(sceneOf(out.storyboard, 'stat').photo).toBeDefined()
-    expect(sceneOf(out.storyboard, 'points').photo).toBeUndefined()
-    expect(out.images.map((i) => i.id).sort()).toEqual([def.imageId, sceneOf(out.storyboard, 'stat').photo!.imageId].sort())
+    expect(sceneOf(out.storyboard, 'title').photo).toBeDefined()
+    expect(sceneOf(out.storyboard, 'stat').photo).toBeUndefined()
+    expect(out.images.map((i) => i.id).sort()).toEqual([def.imageId, sceneOf(out.storyboard, 'title').photo!.imageId].sort())
     expect(out.images.every((i) => i.bitmap === bitmap)).toBe(true)
     expect(out.storyboard.sources.filter((s) => s.label.startsWith('Photo: '))).toHaveLength(2)
     expect(out.storyboard.sources[0]).toEqual(fixtureStoryboard().sources[0])
@@ -74,7 +74,7 @@ describe('attachPhotos', () => {
   it('asks no source at all when no scene can show a photo', async () => {
     sources([photo(1)])
     const sb = fixtureStoryboard()
-    sb.scenes = sb.scenes.filter((s) => s.visual.kind !== 'definition' && s.visual.kind !== 'stat')
+    sb.scenes = sb.scenes.filter((s) => s.visual.kind !== 'definition' && s.visual.kind !== 'title')
     await attachPhotos(sb, { article: 'Diffuse sky radiation', searchScenes: true, load })
     expect(article).not.toHaveBeenCalled()
   })

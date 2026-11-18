@@ -5,7 +5,7 @@ import { H, W } from './env'
 import type { Theme } from './theme'
 import { cameraAt } from './camera'
 import { drawBackground } from './background'
-import { drawCaptions, drawChapter, drawFadeOut } from './overlays'
+import { drawCaptions, drawChapter, drawCredit, drawFadeOut } from './overlays'
 import type { ShotEnv } from './shots/env'
 import { drawIntro } from './shots/intro'
 import { drawPoint } from './shots/point'
@@ -66,11 +66,14 @@ function buffer(w: number, h: number): CanvasRenderingContext2D {
  * options the world comes from it (`samples` sub frames averaged for motion blur), else from the 2D renderer.
  */
 export function renderFrame(ctx: CanvasRenderingContext2D, plan: MotionPlan, t: number, opts: RenderOptions, samples = 1) {
-  if (!opts.stage?.draw(ctx, plan, t, opts, samples)) drawWorldBlurred(ctx, plan, t, opts)
+  const drew3d = !!opts.stage?.draw(ctx, plan, t, opts, samples)
+  if (!drew3d) drawWorldBlurred(ctx, plan, t, opts)
 
   ctx.save()
   ctx.setTransform(ctx.canvas.width / W, 0, 0, ctx.canvas.height / H, 0, 0)
   drawChapter(ctx, opts.theme, plan, t)
+  // Online photos only show on the 3D stage, so their credit does too.
+  if (drew3d) drawCredit(ctx, opts.theme, plan, t, opts.images)
   if (opts.captions) drawCaptions(ctx, opts.theme, plan, t)
   drawFadeOut(ctx, opts.theme, plan, t)
   ctx.restore()
