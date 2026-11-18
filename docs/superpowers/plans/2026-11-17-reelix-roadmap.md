@@ -39,6 +39,8 @@ phase 1: the open phase 1 polish, phase 2 (real pictures) and phase 3 (topic kit
 
 ### Task P0.1: Reduced motion shortens flights
 
+> Overturned in the phase 2 review (2026-11-17): reduced motion flies level and without roll over the whole window.
+
 **Files:** `src/stage/camera.ts` (cameraPose), `src/stage/camera.test.ts`
 
 - [ ] Test `shortens a flight to its second half under reduced motion`: for a flight segment a->b (isFlight), with

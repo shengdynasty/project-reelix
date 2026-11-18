@@ -68,6 +68,13 @@ narration from the same material instead. The public site never probes Ollama.
   the end card. Searches never send text from your own files. With Moving photos on (automatic: off on data
   saver and slow connections), Depth Anything V2 Small makes a depth map in a worker (WebGPU when present),
   cached in IndexedDB, and the photo is raised into relief so the camera move shows real parallax.
+- **Topic kits:** common topic families get a custom 3D hero instead of an icon: a black hole, galaxy, planet,
+  star, volcano, water cycle, rock strata, cell, DNA helix, virus, antibody, prism, light scattering in air, and a
+  globe. A pure matcher scores each kit against the video's topic, the scene's sentence and its defined term;
+  words with other senses ("cell", "sun") need a second word of the same kit. Definitions about a chemical compound
+  show its real 3D structure from PubChem as a ball and stick model. Models move as a function of time (slower
+  under reduced motion) and act on the verbs the narration says (spins, glows, erupts). When a kit fits a
+  definition, the model shows there and the photo goes to the title.
 - **2D renderer** (when 3D visuals are off or unsupported): a canvas engine with a virtual camera, whip pans
   with motion blur, illustrated icon badges ([Phosphor](https://phosphoricons.com), MIT), pictograms, animated
   charts, definition, timeline and step shots. Captions are timed word by word to the voice in both.
@@ -112,7 +119,8 @@ src/tts/        Kokoro worker pool, clip cache, text normalization
 src/motion/     shot plan (camera path, captions, sound cues), word timing, icons
 src/render/     camera, background, shots and overlays drawn on canvas (the 2D renderer)
 src/stage/      the 3D stage: director, set pieces, camera, three.js actors, post effects, tiers, lab checks
-src/photos/     online photos: sources, licences and scoring, attaching to scenes, depth maps (lazy)
+src/photos/     online photos and PubChem structures: sources, licences and scoring, attaching, depth maps (lazy)
+src/stage/kits/ topic kits: model matching, narration verbs, molecule records
 src/audio/      procedural music and sound effects
 src/player/     preview playback and the master mix
 src/export/     WebCodecs export with fallbacks
