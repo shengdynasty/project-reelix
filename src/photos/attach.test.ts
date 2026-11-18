@@ -43,6 +43,8 @@ describe('attachPhotos', () => {
     sources([photo(1), photo(2)])
     const sb = fixtureStoryboard()
     sb.title = 'Sunlight'
+    const at = sb.scenes.findIndex((s) => s.id === 'definition')
+    sb.scenes[at] = { ...sb.scenes[at], narration: 'Diffuse sky radiation is sunlight that reaches the ground from the whole sky, not straight from the sun.' }
     const out = await attachPhotos(sb, { article: 'Diffuse sky radiation', searchScenes: true, load })
     const def = sceneOf(out.storyboard, 'definition').photo!
     expect(def.credit).toMatch(/^Photo: Artist \d, CC BY-SA 4\.0$/)
