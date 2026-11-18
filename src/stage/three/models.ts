@@ -18,6 +18,7 @@ import {
   BoxGeometry,
 } from 'three'
 import type { ModelName } from '../kits'
+import type { Molecule } from '../kits/molecule'
 import { solidMaterial, type StagePalette } from './materials'
 
 export const MODEL_NAMES: ModelName[] = ['black-hole', 'galaxy', 'planet', 'star', 'volcano', 'water-cycle', 'strata', 'cell', 'dna', 'virus', 'antibody', 'prism', 'scatter']
@@ -206,3 +207,27 @@ export function buildModel(name: ModelName, palette: StagePalette): Group {
   g.userData.model = name
   return g
 }
+
+/** Atoms fill a sphere this wide, so the longest molecule still fits the unit box with its balls. */
+const MOLECULE_RADIUS = 0.42
+
+/**
+ * A ball and stick model of `mol`: hydrogen small and pale, carbon in the object colour, oxygen and nitrogen in the
+ * theme's series, anything else in the accent; centred and scaled so it fits the unit box like the other models.
+ */
+export function buildMolecule(mol: Molecule, palette: StagePalette): Group {
+  const g = new Group()
+  g.userData.motion = 'spin'
+  const n = mol.atoms.length
+  const centre = mol.atoms.reduce((c, a) => c.add(new Vector3(a.x, a.y, a.z)), new Vector3()).divideScalar(n)
+  const spread = Math.max(...mol.atoms.map((a) => new Vector3(a.x, a.y, a.z).distanceTo(centre)), 1e-6)
+  const k = MOLECULE_RADIUS / spread
+  const at = mol.atoms.map((a) => new Vector3(a.x, a.y, a.z).sub(centre).multiplyScalar(k))
+  const ball = (e: string) => (e === 'H' ? 0.05 : 0.09)
+  const colour = (e: string) => (e === 'H' ? palette.ink : e === 'C' ? palette.object : e === 'O' ? series(palette, 3) : e === 'N' ? series(palette, 0) : palette.accent)
+  mol.atoms.forEach((a, i) => g.add(mesh(new SphereGeometry(Math.min(ball(a.element), 0.55 - MOLECULE_RADIUS), 16, 8), solidMaterial(colour(a.element)), at[i].toArray() as [number, number, number])))
+  for (const b of mol.bonds) g.add(rod(at[b.a], at[b.b], 0.012 * b.order + 0.008, solidMaterial(palette.muted)))
+  g.userData.model = 'molecule'
+  return g
+}
+
