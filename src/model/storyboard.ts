@@ -109,6 +109,13 @@ export const SceneSchema = z.object({
   priority: z.number(),
   /** An online photo the 3D piece shows as its hero, with the credit line drawn while it is on screen. */
   photo: z.object({ imageId: z.string(), credit: z.string() }).optional(),
+  /** A compound's 3D structure (PubChem) the 3D piece shows as a ball and stick hero. */
+  molecule: z
+    .object({
+      atoms: z.array(z.object({ element: z.string(), x: z.number(), y: z.number(), z: z.number() })),
+      bonds: z.array(z.object({ a: z.number(), b: z.number(), order: z.number() })),
+    })
+    .optional(),
 })
 export type Scene = z.infer<typeof SceneSchema>
 

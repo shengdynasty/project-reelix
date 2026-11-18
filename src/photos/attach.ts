@@ -43,10 +43,12 @@ function phraseOf(scene: Scene, topicWords: string[]): string {
 
 export async function attachPhotos(sb: Storyboard, opts: AttachOptions): Promise<{ storyboard: Storyboard; images: IngestedImage[] }> {
   const unchanged = { storyboard: sb, images: [] }
-  const eligible = sb.scenes.filter((s) => ELIGIBLE.has(s.visual.kind))
+  // A scene showing a molecule keeps it; a photo there would be credited without being seen.
+  const canShow = (s: Scene) => ELIGIBLE.has(s.visual.kind) && !s.molecule
+  const eligible = sb.scenes.filter(canShow)
   if (!eligible.length) return unchanged
   const load = opts.load ?? ((url: string) => loadBitmap(url, opts.signal))
-  const scenes = sb.scenes.map((s) => ({ id: s.id, sentence: s.narration, eligible: ELIGIBLE.has(s.visual.kind), place: false, people: [] }))
+  const scenes = sb.scenes.map((s) => ({ id: s.id, sentence: s.narration, eligible: canShow(s), place: false, people: [] }))
   const fits = (s: Scene, list: PhotoCandidate[]) => list.some((c) => scorePhoto(c, s.narration, { place: false, people: [] }) > 0)
   let picks = new Map<string, PhotoCandidate>()
   const loaded = new Map<string, ImageBitmap>()

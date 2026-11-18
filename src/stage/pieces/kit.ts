@@ -65,16 +65,18 @@ export function pictureHero(ctx: PieceContext, imageId: string | undefined, icon
 export const scenePhoto = (ctx: PieceContext): string | undefined => (ctx.scene.photo && ctx.hasImage(ctx.scene.photo.imageId) ? ctx.scene.photo.imageId : undefined)
 
 /**
- * A piece's single hero: the photo when there is one (the scene's own unless `photo` is given), else the model its
- * topic kit calls for, acting on the verbs the narration says, else the icon; entering at `t`.
+ * A piece's single hero: the compound's structure when the scene has one, else the photo (the scene's own unless
+ * `photo` is given), else the model its topic kit calls for, else the icon; entering at `t`. A structure or a model
+ * acts on the verbs the narration says.
  */
 export function heroFor(ctx: PieceContext, icon: string, at: Vec3, t: number, photo: string | undefined = scenePhoto(ctx)): ActorSpec {
+  const acts = () => [enter(t), ...verbBeats(ctx.words, t + ENTER, ctx.shots[ctx.shots.length - 1].end)]
+  if (ctx.scene.molecule) return { id: actorId(ctx, 'molecule'), at, scale: HERO_SCALE, data: { kind: 'molecule', molecule: ctx.scene.molecule }, beats: acts() }
   if (photo) return pictureHero(ctx, photo, icon, at, t)
   const v = ctx.scene.visual
   const model = kitModel({ topic: ctx.plan.storyboard.title, sentence: ctx.scene.narration, term: v.kind === 'definition' ? v.term : undefined })
   if (!model) return iconActor(ctx, 'icon', 0, icon, at, HERO_SCALE, [enter(t)])
-  const end = ctx.shots[ctx.shots.length - 1].end
-  return { id: actorId(ctx, 'model'), at, scale: HERO_SCALE, data: { kind: 'model', model }, beats: [enter(t), ...verbBeats(ctx.words, t + ENTER, end)] }
+  return { id: actorId(ctx, 'model'), at, scale: HERO_SCALE, data: { kind: 'model', model }, beats: acts() }
 }
 
 /** Half the height of a hero made by pictureHero or heroFor. */

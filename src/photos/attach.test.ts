@@ -71,6 +71,14 @@ describe('attachPhotos', () => {
     expect(openverse).not.toHaveBeenCalled()
     expect(off.images).toEqual([])
   })
+  it('leaves a scene that shows a molecule without a photo', async () => {
+    sources([photo(1), photo(2)])
+    const sb = fixtureStoryboard()
+    const at = sb.scenes.findIndex((s) => s.id === 'definition')
+    sb.scenes[at] = { ...sb.scenes[at], molecule: { atoms: [{ element: 'O', x: 0, y: 0, z: 0 }], bonds: [] } }
+    const out = await attachPhotos(sb, { article: 'Diffuse sky radiation', searchScenes: true, load })
+    expect(sceneOf(out.storyboard, 'definition').photo).toBeUndefined()
+  })
   it('asks no source at all when no scene can show a photo', async () => {
     sources([photo(1)])
     const sb = fixtureStoryboard()

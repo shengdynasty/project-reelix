@@ -320,9 +320,11 @@ export default function App() {
         // Online photos only show on the 3D stage, and only for text that came from a Wikipedia article.
         if (s.lookup && corpus.article && modeRef.current === '3d') {
           setStatus({ phase: 'planning', message: 'Finding photos' })
-          const { attachPhotos } = await import('./photos')
+          const { attachMolecules, attachPhotos } = await import('./photos')
           const searchScenes = corpus.docs.every((d) => d.kind === 'wiki')
-          const found = await attachPhotos(result.storyboard, { article: corpus.article, searchScenes, signal: ctrl.signal })
+          // Structures first: a scene that shows a molecule is not given a photo it would not show.
+          const withMolecules = await attachMolecules(result.storyboard, { signal: ctrl.signal })
+          const found = await attachPhotos(withMolecules, { article: corpus.article, searchScenes, signal: ctrl.signal })
           if (id !== genRef.current) return
           result.storyboard = found.storyboard
           corpus.images.push(...found.images)

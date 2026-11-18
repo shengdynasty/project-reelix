@@ -274,7 +274,7 @@ function poseActor(actor: BuiltActor, group: Group, t: number, deps: BuildDeps, 
   applyPose(actor.object, pose)
   if (actor.rise) riseColumns(actor.object, actor.rise, t)
   if (actor.spec.data.kind === 'particles') drift(actor.object, actor.spec.data, t)
-  if (actor.spec.data.kind === 'model') moveModel(actor.object, t, reducedMotion)
+  if (actor.spec.data.kind === 'model' || actor.spec.data.kind === 'molecule') moveModel(actor.object, t, reducedMotion)
 }
 
 function build({ width, height, quality, reducedMotion = false, depthOfField = true }: StageOptions): Stage | null {

@@ -26,7 +26,7 @@ import { rand } from '../../render/easing'
 import type { ImageSource } from '../../render/env'
 import { WORLD_PER_PX } from '../layout'
 import type { ActorData, ActorPose, ActorSpec, DepthMap } from '../types'
-import { buildModel } from './models'
+import { buildModel, buildMolecule } from './models'
 import { iconGeometry } from './icons3d'
 import { labelMesh } from './labelMesh'
 import { poseMaterial, solidMaterial, type StagePalette } from './materials'
@@ -397,6 +397,8 @@ function build(data: ActorData, deps: BuildDeps): Object3D {
       return cardObject(data, palette)
     case 'model':
       return buildModel(data.model, palette)
+    case 'molecule':
+      return buildMolecule(data.molecule, palette)
   }
 }
 

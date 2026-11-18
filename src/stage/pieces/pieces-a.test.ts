@@ -108,6 +108,11 @@ describe('set pieces A: kit models', () => {
     expect(heroOf(pieceOf(planWith(blackHole, at), 'definition')).data).toEqual({ kind: 'model', model: 'black-hole' }))
   it('lets a photo win over a model', () =>
     expect(heroOf(pieceOf(planWith({ ...blackHole, photo: { imageId: 'web1', credit: 'Photo: X, CC0' } }, at), 'definition')).data.kind).toBe('photo'))
+  it("shows a compound's structure as a ball and stick hero, ahead of a photo", () => {
+    const molecule = { atoms: [{ element: 'O', x: 0, y: 0, z: 0 }], bonds: [] }
+    const hero = heroOf(pieceOf(planWith({ ...blackHole, molecule, photo: { imageId: 'web1', credit: 'Photo: X, CC0' } }, at), 'definition'))
+    expect(hero.data).toEqual({ kind: 'molecule', molecule })
+  })
   it('keeps the icon when no kit fits', () => {
     const plain = { ...sb.scenes[at], narration: 'A treaty is a written agreement between states.', visual: { kind: 'definition' as const, term: 'Treaty', link: 'is', meaning: 'a written agreement between states' } }
     const custom = planWith(plain, at)

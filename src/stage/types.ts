@@ -1,4 +1,5 @@
 import type { ModelName } from './kits'
+import type { Molecule } from './kits/molecule'
 import type { ShotKind } from '../motion/plan'
 
 export type Vec3 = [number, number, number]
@@ -21,6 +22,8 @@ export type ActorData =
   | { kind: 'icon'; icon: string; accent: boolean }
   /** A topic kit's procedural model in place of an icon (same unit box). */
   | { kind: 'model'; model: ModelName }
+  /** A compound's 3D structure as a ball and stick model (same unit box). */
+  | { kind: 'molecule'; molecule: Molecule }
   | { kind: 'label'; text: string; size: LabelSize }
   | { kind: 'photo'; imageId: string; fallbackIcon: string; aspect: number }
   /** `peak`: the value the tallest possible bar stands for (default: the largest of `values`), so separate bars share one scale. */
