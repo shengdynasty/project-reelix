@@ -33,4 +33,12 @@ describe('attachMolecules', () => {
     expect(await attachMolecules(sb, { fetch: async () => null })).toEqual(sb)
     expect(await attachMolecules(sb, { fetch: () => new Promise(() => {}), timeoutMs: 20 })).toEqual(sb)
   })
+  it('asks nothing when a topic kit already shows the scene', async () => {
+    const asked: string[] = []
+    const sb = board('A virus is a tiny infectious agent made of genetic material and protein molecules.', 'Virus')
+    sb.title = 'How do vaccines work?'
+    expect(await attachMolecules(sb, { fetch: async (name) => (asked.push(name), water) })).toEqual(sb)
+    expect(asked).toEqual([])
+  })
 })
+

@@ -12,8 +12,9 @@ export async function addOnlineVisuals(
 ): Promise<{ storyboard: Storyboard; images: IngestedImage[] }> {
   try {
     const { attachMolecules, attachPhotos } = await load()
-    // Structures first: a scene that shows a molecule is not given a photo it would not show.
-    const withMolecules = await attachMolecules(sb, { signal: opts.signal })
+    // Structures first: a scene that shows a molecule is not given a photo it would not show. Only for text from the
+    // Wikipedia article: a term from the user's own files never leaves the device.
+    const withMolecules = opts.searchScenes ? await attachMolecules(sb, { signal: opts.signal }) : sb
     return await attachPhotos(withMolecules, opts)
   } catch (err) {
     if (opts.signal?.aborted) throw err

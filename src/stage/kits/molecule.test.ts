@@ -34,11 +34,22 @@ describe('parseSdf', () => {
 })
 
 describe('fetchMolecule', () => {
-  it("asks PubChem for the compound's 3D record by name", async () => {
-    const fetch = vi.fn(async (_url: string) => new Response(WATER))
+  const pubchem = (synonyms: string[]) =>
+    vi.fn(async (url: string) => (url.includes('/synonyms/') ? new Response(JSON.stringify({ InformationList: { Information: [{ Synonym: synonyms }] } })) : new Response(WATER)))
+  it("asks PubChem for the compound's 3D record by name once the name is one of its own", async () => {
+    const fetch = pubchem(['Water', 'oxidane', 'H2O'])
     vi.stubGlobal('fetch', fetch)
     expect((await fetchMolecule('water'))?.atoms).toHaveLength(3)
-    expect(fetch.mock.calls[0][0]).toBe('https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/water/SDF?record_type=3d')
+    expect(fetch.mock.calls.map((c) => c[0])).toEqual([
+      'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/water/synonyms/JSON',
+      'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/water/SDF?record_type=3d',
+    ])
+  })
+  it('refuses a loose name match, such as Fire answered with resin', async () => {
+    const fetch = pubchem(['Resin', 'Resins', 'Gum resin', 'Rosin'])
+    vi.stubGlobal('fetch', fetch)
+    expect(await fetchMolecule('Fire')).toBeNull()
+    expect(fetch).toHaveBeenCalledTimes(1)
   })
   it('gives null when PubChem has no such compound or cannot be reached', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response('Status: 404', { status: 404 })))

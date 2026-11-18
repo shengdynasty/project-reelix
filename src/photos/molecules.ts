@@ -2,6 +2,7 @@
 // PubChem, so its hero is a ball and stick model. Only the defined term is sent, and only when the scene's own
 // sentence is about chemistry.
 import type { Storyboard } from '../model/storyboard'
+import { kitModel } from '../stage/kits'
 import { fetchMolecule, type Molecule } from '../stage/kits/molecule'
 
 /** A definition is about a compound when its sentence uses one of these words. */
@@ -15,7 +16,10 @@ export async function attachMolecules(
   opts: { signal?: AbortSignal; fetch?: (name: string, signal?: AbortSignal) => Promise<Molecule | null>; timeoutMs?: number } = {},
 ): Promise<Storyboard> {
   const lookup = opts.fetch ?? fetchMolecule
-  const wanted = sb.scenes.filter((s) => s.visual.kind === 'definition' && CHEMISTRY.test(s.narration)).slice(0, MAX_LOOKUPS)
+  // A scene a topic kit already shows keeps its model and is not looked up.
+  const wanted = sb.scenes
+    .filter((s) => s.visual.kind === 'definition' && CHEMISTRY.test(s.narration) && !kitModel({ topic: sb.title, sentence: s.narration, term: s.visual.term }))
+    .slice(0, MAX_LOOKUPS)
   if (!wanted.length) return sb
   const found = new Map<string, { term: string; molecule: Molecule }>()
   const work = Promise.all(

@@ -7,6 +7,8 @@ export interface Molecule {
 }
 
 const PUBCHEM = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/'
+/** A compound's own names lead its synonym list; a name further down is a loose match. */
+const OWN_NAMES = 3
 
 /** The first molfile block of an SDF record (V2000), or null when the text is not one. */
 export function parseSdf(text: string): Molecule | null {
@@ -28,6 +30,11 @@ export function parseSdf(text: string): Molecule | null {
 /** The 3D structure of the compound called `name`, or null when PubChem has none or cannot be reached. */
 export async function fetchMolecule(name: string, signal?: AbortSignal): Promise<Molecule | null> {
   try {
+    // PubChem matches names loosely ("Fire" finds resin): the name must be one of the compound's first synonyms.
+    const synonyms = await fetch(`${PUBCHEM}${encodeURIComponent(name)}/synonyms/JSON`, { signal })
+    if (!synonyms.ok) return null
+    const list = ((await synonyms.json()) as { InformationList?: { Information?: { Synonym?: string[] }[] } }).InformationList?.Information?.[0]?.Synonym ?? []
+    if (!list.slice(0, OWN_NAMES).some((s) => s.toLowerCase() === name.trim().toLowerCase())) return null
     const res = await fetch(`${PUBCHEM}${encodeURIComponent(name)}/SDF?record_type=3d`, { signal })
     return res.ok ? parseSdf(await res.text()) : null
   } catch {

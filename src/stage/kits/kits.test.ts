@@ -24,6 +24,21 @@ describe('kitModel', () => {
     expect(kitModel({ topic: 'The continents', sentence: 'Seven continents sit on the tectonic plates of the Earth.' })).toBe('globe')
     expect(kitModel({ topic: 'Countries of Africa', sentence: 'Africa has 54 countries.' })).toBe('globe')
   })
+  it('stays generic for names, products and phrases that borrow a kit word', () => {
+    for (const [topic, sentence] of [
+      ['Freddie Mercury', 'Freddie Mercury was the lead singer of Queen.'],
+      ['Bruno Mars', 'Bruno Mars is a singer and songwriter.'],
+      ['Mercury poisoning', 'Mercury poisoning harms the nervous system.'],
+      ['Computer viruses', 'A computer virus copies itself into other programs.'],
+      ['Viral marketing', 'Viral marketing spreads a message from person to person.'],
+      ['Country music', 'Country music grew out of folk songs.'],
+      ['Samsung Galaxy', 'The Samsung Galaxy is a line of phones.'],
+      ['The technological singularity', 'The singularity is a point where technology outgrows us.'],
+      ['Genetic algorithms', 'A genetic algorithm searches by mutating candidate answers.'],
+      ['Star players', 'A star player scores most of the goals.'],
+    ])
+      expect(kitModel({ topic, sentence })).toBeNull()
+  })
   it('stays generic when a keyword is used in another sense or nothing matches', () => {
     expect(kitModel({ topic: 'Cell phone batteries', sentence: 'A cell phone battery stores energy in lithium.' })).toBeNull()
     expect(kitModel({ topic: 'A light lunch', sentence: 'Salads make a light lunch.' })).toBeNull()

@@ -18,4 +18,11 @@ describe('addOnlineVisuals', () => {
     ctrl.abort()
     await expect(addOnlineVisuals(sb, { ...opts, signal: ctrl.signal }, () => Promise.reject(new DOMException('Canceled', 'AbortError')))).rejects.toThrow()
   })
+  it('asks PubChem nothing when the text came from your own files', async () => {
+    let asked = 0
+    const load = async () => ({ attachMolecules: async (s: Storyboard) => (asked++, s), attachPhotos: async (s: Storyboard) => ({ storyboard: s, images: [] }) })
+    await addOnlineVisuals(sb, { ...opts, searchScenes: false }, load as never)
+    expect(asked).toBe(0)
+  })
 })
+

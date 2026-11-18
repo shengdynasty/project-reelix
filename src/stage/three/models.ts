@@ -19,6 +19,7 @@ import {
   BoxGeometry,
 } from 'three'
 import type { ModelName } from '../kits'
+import type { ActorPose } from '../types'
 import type { Molecule } from '../kits/molecule'
 import { solidMaterial, type StagePalette } from './materials'
 
@@ -28,14 +29,22 @@ export const MODEL_NAMES: ModelName[] = ['black-hole', 'galaxy', 'planet', 'star
 export type ModelMotion = 'spin' | 'twirl' | 'roll' | 'fall'
 
 const GOLDEN = Math.PI * (3 - Math.sqrt(5))
-/** In the optics models the colour is the content (blue scatters, red passes, a prism spreads a spectrum), so they keep it on every theme. */
-const LIGHT = { sun: '#fff1b8', blue: '#4c8dff', red: '#ff5a3c', spectrum: ['#ff4d4d', '#ff9f1c', '#ffe14d', '#3ddc84', '#4c8dff', '#9b5cff'] }
+/** Where the colour is the content (the sun, lava, oceans and rain; blue scattering, red passing, a spectrum), models keep it on every theme. */
+export const LIGHT = { sun: '#ffb703', lava: '#ff5a1f', ocean: '#2f7de1', land: '#5f9e4f', blue: '#4c8dff', red: '#ff5a3c', spectrum: ['#ff4d4d', '#ff9f1c', '#ffe14d', '#3ddc84', '#4c8dff', '#9b5cff'] }
 
 function mesh(geometry: Mesh['geometry'], material: Material, at: [number, number, number] = [0, 0, 0], motion?: ModelMotion): Mesh {
   const m = new Mesh(geometry, material)
   m.position.set(...at)
   m.castShadow = true
   if (motion) m.userData.motion = motion
+  return m
+}
+
+/** A see-through shell: drawn after the parts it holds, without depth or shadow, so they show through it (prepare keeps it so). */
+function shell(m: Mesh): Mesh {
+  m.castShadow = false
+  m.renderOrder = 1
+  ;(m.material as Material).userData.shell = true
   return m
 }
 
@@ -61,11 +70,11 @@ const BUILDERS: Record<ModelName, (p: StagePalette) => Group> = {
     const g = new Group()
     const earth = new Group()
     earth.userData.motion = 'spin'
-    earth.add(mesh(new SphereGeometry(0.4, 48, 24), solidMaterial(series(p, 0), { roughness: 0.7 })))
+    earth.add(mesh(new SphereGeometry(0.4, 48, 24), solidMaterial(LIGHT.ocean, { roughness: 0.7 })))
     // Land as low domes on the sphere, then a graticule: three parallels and four meridians.
     for (const [lat, lon, r] of [[0.5, 0.3, 0.16], [-0.3, 1.2, 0.13], [0.2, 2.6, 0.18], [-0.6, 3.8, 0.1], [0.9, 4.9, 0.12]] as const) {
       const at = new Vector3(Math.cos(lat) * Math.cos(lon), Math.sin(lat), Math.cos(lat) * Math.sin(lon)).multiplyScalar(0.36)
-      earth.add(mesh(new SphereGeometry(r, 16, 8), solidMaterial(series(p, 2), { roughness: 0.9 }), at.toArray() as [number, number, number]))
+      earth.add(mesh(new SphereGeometry(r, 16, 8), solidMaterial(LIGHT.land, { roughness: 0.9 }), at.toArray() as [number, number, number]))
     }
     for (const lat of [-0.6, 0, 0.6]) {
       const parallel = mesh(new TorusGeometry(0.41 * Math.cos(lat), 0.004, 4, 64), solidMaterial(p.muted), [0, 0.41 * Math.sin(lat), 0])
@@ -112,7 +121,7 @@ const BUILDERS: Record<ModelName, (p: StagePalette) => Group> = {
   planet: (p) => {
     const g = new Group()
     g.add(mesh(new SphereGeometry(0.3, 32, 16), solidMaterial(series(p, 0)), [0, 0, 0], 'spin'))
-    const ring = mesh(new RingGeometry(0.38, 0.52, 64), solidMaterial(p.muted, { baseOpacity: 0.85 }))
+    const ring = shell(mesh(new RingGeometry(0.38, 0.52, 64), solidMaterial(p.muted, { baseOpacity: 0.85 })))
     ;(ring.material as Material).side = DoubleSide
     ring.rotation.x = -Math.PI * 0.4
     const orbit = new Group()
@@ -123,28 +132,28 @@ const BUILDERS: Record<ModelName, (p: StagePalette) => Group> = {
   },
   star: (p) => {
     const g = new Group()
-    g.add(mesh(new SphereGeometry(0.34, 32, 16), glow(p), [0, 0, 0], 'spin'))
-    g.add(mesh(new SphereGeometry(0.46, 32, 16), solidMaterial(p.accent, { emissive: p.accent, baseGlow: 0.5, baseOpacity: 0.25 })))
+    g.add(mesh(new SphereGeometry(0.34, 32, 16), glow(p, LIGHT.sun), [0, 0, 0], 'spin'))
+    g.add(shell(mesh(new SphereGeometry(0.46, 32, 16), solidMaterial(LIGHT.sun, { emissive: LIGHT.sun, baseGlow: 0.5, baseOpacity: 0.25 }))))
     return g
   },
   volcano: (p) => {
     const g = new Group()
     g.add(mesh(new CylinderGeometry(0.1, 0.5, 0.55, 32, 1), solidMaterial(p.object, { roughness: 0.9 }), [0, -0.22, 0]))
-    g.add(mesh(new CylinderGeometry(0.09, 0.09, 0.02, 24), glow(p), [0, 0.06, 0]))
+    g.add(mesh(new CylinderGeometry(0.09, 0.09, 0.02, 24), glow(p, LIGHT.lava), [0, 0.06, 0]))
     const plume = new Group()
     plume.userData.motion = 'spin'
-    for (let i = 0; i < 6; i++) plume.add(mesh(new SphereGeometry(0.05 + i * 0.012, 12, 8), glow(p), [Math.sin(i * 2.1) * 0.06, 0.14 + i * 0.055, Math.cos(i * 2.1) * 0.06]))
+    for (let i = 0; i < 6; i++) plume.add(mesh(new SphereGeometry(0.05 + i * 0.012, 12, 8), glow(p, LIGHT.lava), [Math.sin(i * 2.1) * 0.06, 0.14 + i * 0.055, Math.cos(i * 2.1) * 0.06]))
     g.add(plume)
     return g
   },
   'water-cycle': (p) => {
     const g = new Group()
-    g.add(mesh(new CylinderGeometry(0.5, 0.5, 0.06, 48), solidMaterial(series(p, 0)), [0, -0.42, 0]))
-    g.add(mesh(new SphereGeometry(0.1, 16, 8), glow(p), [-0.38, 0.38, 0]))
+    g.add(mesh(new CylinderGeometry(0.5, 0.5, 0.06, 48), solidMaterial(LIGHT.ocean), [0, -0.42, 0]))
+    g.add(mesh(new SphereGeometry(0.1, 16, 8), glow(p, LIGHT.sun), [-0.38, 0.38, 0]))
     for (const [x, r] of [[0.05, 0.13], [0.2, 0.15], [0.35, 0.11]] as const) g.add(mesh(new SphereGeometry(r, 16, 8), solidMaterial(p.ink), [x, 0.3, 0]))
     const rain = new Group()
     rain.userData.motion = 'fall'
-    for (let i = 0; i < 8; i++) rain.add(mesh(new CapsuleGeometry(0.012, 0.06, 2, 6), solidMaterial(series(p, 0)), [0.02 + (i % 4) * 0.1, 0.1 - Math.floor(i / 4) * 0.18, ((i * 3) % 4) * 0.04 - 0.06]))
+    for (let i = 0; i < 8; i++) rain.add(mesh(new CapsuleGeometry(0.012, 0.06, 2, 6), solidMaterial(LIGHT.ocean), [0.02 + (i % 4) * 0.1, 0.1 - Math.floor(i / 4) * 0.18, ((i * 3) % 4) * 0.04 - 0.06]))
     g.add(rain)
     return g
   },
@@ -155,7 +164,7 @@ const BUILDERS: Record<ModelName, (p: StagePalette) => Group> = {
   },
   cell: (p) => {
     const g = new Group()
-    g.add(mesh(new SphereGeometry(0.5, 32, 16), solidMaterial(series(p, 1), { baseOpacity: 0.3 })))
+    g.add(shell(mesh(new SphereGeometry(0.5, 32, 16), solidMaterial(series(p, 1), { baseOpacity: 0.3 }))))
     g.add(mesh(new SphereGeometry(0.16, 24, 12), glow(p), [0.05, 0.04, 0]))
     const inside = new Group()
     inside.userData.motion = 'spin'
@@ -205,7 +214,7 @@ const BUILDERS: Record<ModelName, (p: StagePalette) => Group> = {
   },
   prism: (p) => {
     const g = new Group()
-    const glass = mesh(new CylinderGeometry(0.3, 0.3, 0.42, 3), solidMaterial(p.ink, { baseOpacity: 0.35, roughness: 0.1 }))
+    const glass = shell(mesh(new CylinderGeometry(0.3, 0.3, 0.42, 3), solidMaterial(p.ink, { baseOpacity: 0.35, roughness: 0.1 })))
     glass.rotation.x = Math.PI / 2
     g.add(glass)
     g.add(rod(new Vector3(-0.54, -0.2, 0), new Vector3(-0.12, 0, 0), 0.015, glow(p, p.ink)))
@@ -255,6 +264,11 @@ const FALL_SPAN = 0.18
 /** Reduced motion keeps the movement, slower. */
 const CALM = 0.3
 
+/** A model's pose with its turns (narration verbs' spins) calmed like its idle motion, for reduced motion. */
+export function calmModelPose(pose: ActorPose): ActorPose {
+  return { ...pose, rotation: [pose.rotation[0], pose.rotation[1] * CALM, pose.rotation[2]] }
+}
+
 /** Poses a model's moving parts at time `t` ms from their built pose alone, so any frame can be drawn in any order. */
 export function moveModel(model: Object3D, t: number, reducedMotion: boolean): void {
   const s = (t / 1000) * (reducedMotion ? CALM : 1)
@@ -293,10 +307,12 @@ export function buildMolecule(mol: Molecule, palette: StagePalette): Group {
   const spread = Math.max(...mol.atoms.map((a) => new Vector3(a.x, a.y, a.z).distanceTo(centre)), 1e-6)
   const k = MOLECULE_RADIUS / spread
   const at = mol.atoms.map((a) => new Vector3(a.x, a.y, a.z).sub(centre).multiplyScalar(k))
-  const ball = (e: string) => (e === 'H' ? 0.05 : 0.09)
+  // Atoms and sticks scale with the shortest bond, so a long molecule thins out instead of clumping.
+  const shortest = mol.bonds.length ? Math.min(...mol.bonds.map((b) => at[b.a].distanceTo(at[b.b]))) : Infinity
+  const ball = (e: string) => Math.min(e === 'H' ? 0.05 : 0.09, 0.32 * shortest)
   const colour = (e: string) => (e === 'H' ? palette.ink : e === 'C' ? palette.object : e === 'O' ? series(palette, 3) : e === 'N' ? series(palette, 0) : palette.accent)
   mol.atoms.forEach((a, i) => g.add(mesh(new SphereGeometry(Math.min(ball(a.element), 0.55 - MOLECULE_RADIUS), 16, 8), solidMaterial(colour(a.element)), at[i].toArray() as [number, number, number])))
-  for (const b of mol.bonds) g.add(rod(at[b.a], at[b.b], 0.012 * b.order + 0.008, solidMaterial(palette.muted)))
+  for (const b of mol.bonds) g.add(rod(at[b.a], at[b.b], Math.min(0.012 * b.order + 0.008, 0.12 * shortest), solidMaterial(palette.muted)))
   return wrap(g, 'molecule')
 }
 

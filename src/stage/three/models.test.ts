@@ -3,7 +3,10 @@ import { Box3, Mesh, Vector3 } from 'three'
 import { THEMES } from '../../render/theme'
 import type { ModelName } from '../kits'
 import { stagePalette } from './materials'
-import { MODEL_NAMES, buildModel, buildMolecule, moveModel } from './models'
+import { LIGHT, MODEL_NAMES, buildModel, buildMolecule, calmModelPose, moveModel } from './models'
+import { actorPose } from '../pose'
+import { prepare } from './stage'
+import { MeshStandardMaterial } from 'three'
 
 const palette = stagePalette(THEMES.night)
 const meshes = (name: ModelName) => {
@@ -77,4 +80,41 @@ describe('moveModel', () => {
     expect([full.rotation.y, full.position.y]).toEqual([0, 0])
   })
 })
+
+describe('model fixes', () => {
+  const standard = (o: ReturnType<typeof buildModel>) => {
+    const list: Mesh[] = []
+    o.traverse((m) => m instanceof Mesh && m.material instanceof MeshStandardMaterial && list.push(m))
+    return list
+  }
+  it.each(MODEL_NAMES)('draws the see-through shells of %s last, without depth or shadow, so what is inside shows', (name) => {
+    const o = buildModel(name, palette)
+    prepare(o)
+    for (const m of standard(o).filter((x) => (x.material as MeshStandardMaterial).userData.baseOpacity < 1)) {
+      expect(m.castShadow).toBe(false)
+      expect(m.renderOrder).toBeGreaterThanOrEqual(1)
+      expect((m.material as MeshStandardMaterial).depthWrite).toBe(false)
+    }
+  })
+  it('keeps the sun, lava, oceans and rain in their real colours on every theme', () => {
+    const colours = (name: ModelName) => standard(buildModel(name, palette)).map((m) => '#' + (m.material as MeshStandardMaterial).color.getHexString())
+    expect(colours('star')).toContain(LIGHT.sun)
+    expect(colours('volcano')).toContain(LIGHT.lava)
+    expect(colours('globe')).toContain(LIGHT.ocean)
+    expect(colours('water-cycle')).toContain(LIGHT.ocean)
+  })
+  it('sizes atoms to the bonds, so a long molecule stays a ball and stick model, not a clump', () => {
+    const chain = { atoms: Array.from({ length: 12 }, (_, i) => ({ element: 'C', x: i * 1.3, y: (i % 2) * 0.75, z: 0 })), bonds: Array.from({ length: 11 }, (_, i) => ({ a: i, b: i + 1, order: 1 })) }
+    const o = buildMolecule(chain, palette)
+    o.updateMatrixWorld(true)
+    const balls = standard(o).filter((m) => m.geometry.type === 'SphereGeometry')
+    const gap = balls[0].position.distanceTo(balls[1].position)
+    for (const b of balls) expect((b.geometry as unknown as SphereGeometryLike).parameters.radius).toBeLessThanOrEqual(0.4 * gap)
+  })
+  it('calms the turns narration verbs add under reduced motion', () => {
+    const spec = { id: '1:model:0', at: [0, 0, 0] as [number, number, number], scale: 2, data: { kind: 'model' as const, model: 'planet' as const }, beats: [{ t: 0, dur: 0, action: 'enter' as const }, { t: 1000, dur: 1200, action: 'spin' as const }] }
+    expect(calmModelPose(actorPose(spec, 1600)).rotation[1]).toBeLessThanOrEqual(0.3 * Math.PI + 1e-9)
+  })
+})
+type SphereGeometryLike = { parameters: { radius: number } }
 

@@ -33,7 +33,9 @@ const TOPIC_WEIGHT = 0.6
 const SCENE_WEIGHT = 0.4
 
 /** Words with other everyday senses: they count only beside another word of the same model. */
-const AMBIGUOUS = new Set(['cell', 'nucleus', 'membrane', 'sun', 'solar', 'star', 'orbit', 'rain', 'spectrum', 'infection', 'fusion', 'layers', 'plates'])
+const AMBIGUOUS = new Set(['cell', 'nucleus', 'membrane', 'sun', 'solar', 'star', 'orbit', 'rain', 'spectrum', 'infection', 'fusion', 'layers', 'plates', 'mercury', 'mars', 'venus', 'singularity'])
+/** Names, products and phrases that borrow a kit word; they are taken out of the text before matching. */
+const BORROWED = /\b(computer virus(es)?|viral (marketing|videos?)|go(es|ne)? viral|went viral|country (music|singers?)|countryside|samsung galaxy|guardians of the galaxy|technological singularity|genetic algorithms?|(star|rock|pop|movie|all)[ -]stars?|star players?|freddie mercury|bruno mars|mercury poisoning|cell phones?|solar panels?)\b/gi
 
 /** In order: on equal scores the earlier model wins, so the more specific ones come first. */
 const MODELS: { model: ModelName; words: string[] }[] = [
@@ -59,11 +61,12 @@ const has = (text: string, word: string) => new RegExp(`\\b${escape(word)}(s|es)
 
 /** The model for a scene, or null for the generic treatment (the scene's icon). */
 export function kitModel(ctx: KitContext): ModelName | null {
-  const named = `${ctx.topic} ${ctx.term ?? ''}`
+  const named = `${ctx.topic} ${ctx.term ?? ''}`.replace(BORROWED, ' ')
+  const sentence = ctx.sentence.replace(BORROWED, ' ')
   let best: { model: ModelName; score: number } | null = null
   for (const { model, words } of MODELS) {
     const inTopic = words.filter((w) => has(named, w))
-    const inScene = words.filter((w) => has(ctx.sentence, w))
+    const inScene = words.filter((w) => has(sentence, w))
     const all = new Set([...inTopic, ...inScene])
     const clear = [...all].some((w) => !AMBIGUOUS.has(w)) || all.size > 1
     if (!clear) continue

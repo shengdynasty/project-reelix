@@ -40,7 +40,7 @@ import { actorPose, columnRise } from '../pose'
 import type { ActorData, ActorSpec, Beat, SetPiece, StageSet } from '../types'
 import { activePieces } from '../window'
 import { applyPose, buildActor, type BuildDeps } from './actors'
-import { moveModel } from './models'
+import { calmModelPose, moveModel } from './models'
 import { createFx, type Fx } from './fx'
 import type { StagePalette } from './materials'
 
@@ -142,13 +142,14 @@ const materialsOf = (object: Mesh | Points): Material[] => (Array.isArray(object
  * icon's drawing shadows its slab, bars shadow each other), and everything writes depth, labels where their texture is
  * opaque, so the depth of field reads their distance and keeps them sharp instead of blurring them as background.
  */
-function prepare(object: Object3D): void {
+export function prepare(object: Object3D): void {
   object.traverse((child) => {
     if (!(child instanceof Mesh) && !(child instanceof Points)) return
     for (const material of materialsOf(child)) {
       if (material instanceof MeshStandardMaterial) {
         child.receiveShadow = true
-        material.depthWrite = true
+        // A model's see-through shell (models.ts) must not hide the parts inside it.
+        material.depthWrite = !material.userData.shell
       } else if (material instanceof MeshBasicMaterial && material.map) {
         material.depthWrite = true
         material.alphaTest = LABEL_ALPHA_TEST
@@ -255,7 +256,8 @@ function drift(object: Object3D, data: ParticleData, t: number): void {
 }
 
 function poseActor(actor: BuiltActor, group: Group, t: number, deps: BuildDeps, reducedMotion: boolean): void {
-  const pose = actorPose(actor.spec, t)
+  const kind = actor.spec.data.kind
+  const pose = reducedMotion && (kind === 'model' || kind === 'molecule') ? calmModelPose(actorPose(actor.spec, t)) : actorPose(actor.spec, t)
   if (actor.count) {
     const k = countCurve(pose.progress, actor.count.dur)
     const data = actor.spec.data
