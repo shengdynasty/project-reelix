@@ -22,4 +22,18 @@ describe('createWatchdog', () => {
     for (let t = 0; t <= 3000; t += 33) results.push(w.sample(t === 990 ? 400 : 20, t))
     expect(results.every((r) => r === 'ok')).toBe(true)
   })
+  it('treats one long frame gap, a hidden tab coming back, as a pause rather than a slow frame', () => {
+    const w = createWatchdog()
+    for (let t = 0; t <= 3000; t += 16) w.sample(16, t)
+    expect(w.sample(5000, 8000)).toBe('ok')
+    const results = []
+    for (let t = 8016; t <= 12000; t += 16) results.push(w.sample(16, t))
+    expect(results.every((r) => r === 'ok')).toBe(true)
+  })
+  it('still steps down a device whose every frame is longer than the pause limit', () => {
+    const w = createWatchdog()
+    let r = 'ok'
+    for (let t = 0; t <= 8000 && r === 'ok'; t += 2000) r = w.sample(2000, t)
+    expect(r).toBe('step-down')
+  })
 })

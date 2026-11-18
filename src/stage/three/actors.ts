@@ -133,8 +133,10 @@ function photoObject(data: Data<'photo'>, deps: BuildDeps): Object3D {
     icon.userData.fallback = true
     return icon
   }
-  const h = PHOTO_HEIGHT
-  const w = h * data.aspect
+  // The photo keeps its own aspect, fitted inside the PHOTO_HEIGHT by data.aspect box its piece laid out.
+  const ratio = copy.width / copy.height
+  const w = ratio >= data.aspect ? PHOTO_HEIGHT * data.aspect : PHOTO_HEIGHT * ratio
+  const h = w / ratio
   const texture = new CanvasTexture(copy)
   texture.colorSpace = SRGBColorSpace
   const group = new Group()

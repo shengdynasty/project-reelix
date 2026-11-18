@@ -518,8 +518,8 @@ function columnPoints(p: SetPiece): { name: string; at: Vec3 }[] {
 const wideItems = (n: number) => ['Gather the dry ingredients', 'Measure every liquid twice', 'Combine them without hurry', 'Rest the finished batter', 'Bake until golden brown'].slice(0, n)
 
 describe('set pieces B: framing with label extents', () => {
-  it('keeps every label, icon and station of the new pieces inside the frame at every key', () =>
-    set.pieces.filter((p) => ['chart', 'timeline', 'steps', 'summary', 'end'].includes(p.kind)).forEach((p) => expect(outside(p)).toEqual([])))
+  it('keeps every label, icon and station of every piece inside the frame at every key', () =>
+    set.pieces.filter((p) => ['chart', 'timeline', 'steps', 'summary', 'end', 'point', 'stat', 'compare', 'definition', 'intro', 'image'].includes(p.kind)).forEach((p) => expect(outside(p)).toEqual([])))
   it('chart: keeps the title, the callout and every column in frame however low the highlighted value', () => {
     for (const highlight of [0, 2, 4]) {
       const p = pieceOf(planWith({ ...chartScene, visual: { kind: 'chart', data: chartData, highlight } }, sceneIndex('chart')), 'chart')
@@ -554,6 +554,16 @@ describe('set pieces B: framing with label extents', () => {
     for (const n of [2, 5]) {
       const custom = planWith({ ...scene, visual: { kind: 'steps', heading: 'Kinds of bread', items: wideItems(n), style: 'kinds', cues: wideItems(n).map((_, i) => i / n) } }, sceneIndex('steps'))
       const p = directVideo(custom, { hasImage: () => true }).pieces.find((x) => x.kind === 'steps' && !x.actors.some((a) => a.data.kind === 'token'))!
+      expect(outside(p)).toEqual([])
+    }
+  })
+  it('points: keeps labels as wide as a label runs inside the frame at every key, for two to five items', () => {
+    const scene = fixtureStoryboard().scenes[sceneIndex('bullets')]
+    const items = ['Supermassive black holes anchor galaxies', 'Merging black holes send gravitational waves', 'Spaghettification stretches infalling matter', 'Hawking radiation slowly evaporates them', 'Quasars outshine whole galaxies']
+    for (const n of [2, 3, 4, 5]) {
+      const custom = planWith({ ...scene, visual: { kind: 'bullets', eyebrow: 'Key points', heading: 'What we see', items: items.slice(0, n), cues: items.slice(0, n).map((_, i) => i / n) } }, sceneIndex('bullets'))
+      const p = pieceOf(custom, 'point')
+      expect(Math.max(...texts(p).map((t) => t.length))).toBeGreaterThanOrEqual(16)
       expect(outside(p)).toEqual([])
     }
   })

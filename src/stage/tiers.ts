@@ -20,17 +20,29 @@ export function deviceProfile(env: { coarsePointer: boolean; screenWidth: number
   return { default3d: true, tier: memory <= LOW_MEMORY || env.cores < FEW_CORES ? 'medium' : 'high' }
 }
 
+/** A frame this long is the page coming back from a pause (a hidden tab, a sleep), not a slow frame, unless the one before it was as long. */
+const PAUSE_MS = 1000
+
 /**
  * Watches preview frame times: once a window of `windowMs` is full, a median frame time over `budgetMs` asks for a
- * step down, and the next window starts afresh, so one slow frame never counts.
+ * step down, and the next window starts afresh, so one slow frame never counts. A pause starts the window again.
  */
 export function createWatchdog(opts: { budgetMs?: number; windowMs?: number } = {}): { sample(frameMs: number, now: number): 'ok' | 'step-down' } {
   const budget = opts.budgetMs ?? 50
   const window = opts.windowMs ?? 3000
   let frames: { ms: number; at: number }[] = []
   let start: number | null = null
+  let lastLong = false
   return {
     sample(frameMs, now) {
+      const long = frameMs > PAUSE_MS
+      if (long && !lastLong) {
+        lastLong = true
+        frames = []
+        start = now
+        return 'ok'
+      }
+      lastLong = long
       start ??= now
       frames.push({ ms: frameMs, at: now })
       frames = frames.filter((f) => f.at > now - window)

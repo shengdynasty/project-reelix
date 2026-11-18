@@ -54,8 +54,8 @@ narration from the same material instead. The public site never probes Ollama.
   director turns the motion plan into set pieces (title, definition, key points, stat, compare, chart, image,
   timeline, steps, kinds, summary and an end card) placed along a gentle path, with extruded Phosphor icons,
   short labels, framed photos, 3D bars, ribbons, pictograms and particles that enter on the words that name
-  them. The camera flies between pieces and keeps the previous one in view. Depth of field, bloom, a vignette,
-  grain and filmic tone mapping finish each frame. Frames are a pure function of time, so a saved video
+  them. The camera flies from piece to piece, and the previous one stays in view through each flight.
+  Depth of field, bloom, a vignette, grain and filmic tone mapping finish each frame. Frames are a pure function of time, so a saved video
   matches the preview. The 3D code loads only once a video starts. Desktops get 3D by default; phones and
   tablets get the 2D renderer (3D can be turned on in settings), and a watchdog steps a slow preview down to
   960x540 and then to 2D. Without WebGL2, or when the graphics context is lost, the 2D renderer takes over.
@@ -81,7 +81,7 @@ Useful scripts:
 npx tsx scripts/plan-topics.ts "black holes" quick       # storyboard for a topic, from live Wikipedia (cached)
 npx tsx scripts/plan-topics.ts "notes:Your text here"    # storyboard for typed notes
 node scripts/build-icons.mjs                              # regenerate src/motion/icons.json
-node scripts/deploy-to-site.mjs                           # build and copy into ~/cool-website/public/explainer
+node scripts/deploy-to-site.mjs                           # build and copy into ~/cool-website/public/reelix
 ```
 
 ## Deploying to sheng-yan.com

@@ -4,8 +4,8 @@ import { labelFor } from '../labels'
 import type { SetPiece, Vec3 } from '../types'
 import { enter, framePiece, genericPiece, iconActor, labelActor, type PieceContext } from './kit'
 
-/** The arc runs from x -ARC_HALF_WIDTH to ARC_HALF_WIDTH. */
-const ARC_HALF_WIDTH = 4
+/** The arc runs from x -ARC_HALF_WIDTH to ARC_HALF_WIDTH, narrow enough that a label as wide as a label runs stays inside the frame at either end. */
+const ARC_HALF_WIDTH = 3.2
 /** How far the ends of the arc sit behind its middle, so the items read as a curve in depth. */
 const ARC_SAG = 2
 const ICON_SCALE = 1.6

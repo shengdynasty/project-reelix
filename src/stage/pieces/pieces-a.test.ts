@@ -126,9 +126,9 @@ describe('set pieces A: definition', () => {
 describe('set pieces A: points', () => {
   const p = piece('point')
   const shots = shotsOf(p)
-  it('puts the items on an arc from x -4 to 4 that recedes at the ends, the first icon being the hero', () => {
+  it('puts the items on an arc from x -3.2 to 3.2 that recedes at the ends, the first icon being the hero', () => {
     const icons = p.actors.filter((a) => a.data.kind === 'icon')
-    expect(icons.map((a) => a.at[0])).toEqual([-4, 0, 4])
+    expect(icons.map((a) => a.at[0])).toEqual([-3.2, 0, 3.2])
     expect(icons[0].at[2]).toBeLessThan(icons[1].at[2])
     expect(icons[2].at[2]).toBe(icons[0].at[2])
     expect(p.heroId).toBe(icons[0].id)
@@ -138,12 +138,12 @@ describe('set pieces A: points', () => {
     expect(texts(p)).toEqual(['Sunlight', 'Air scatters blue', 'Sunsets'])
     labels(p).forEach((a, k) => {
       expect(enterOf(a).t).toBe(shots[k].t0)
-      expect(a.at[0]).toBe([-4, 0, 4][k])
+      expect(a.at[0]).toBe([-3.2, 0, 3.2][k])
     })
   })
   it('spreads two or four items evenly along the arc, the middle at depth 0 and never -0', () => {
-    ;[-4, -4 / 3, 4 / 3, 4].forEach((x, k) => expect(arcPosition(k, 4, 0)[0]).toBeCloseTo(x, 6))
-    expect(Array.from({ length: 2 }, (_, k) => arcPosition(k, 2, 0))).toEqual([[-4, 0, -2], [4, 0, -2]])
+    ;[-3.2, -3.2 / 3, 3.2 / 3, 3.2].forEach((x, k) => expect(arcPosition(k, 4, 0)[0]).toBeCloseTo(x, 6))
+    expect(Array.from({ length: 2 }, (_, k) => arcPosition(k, 2, 0))).toEqual([[-3.2, 0, -2], [3.2, 0, -2]])
     expect(Object.is(arcPosition(1, 3, 0)[2], 0)).toBe(true)
     expect(arcPosition(1, 4, 0)[2]).toBeCloseTo(-2 / 9, 6)
   })

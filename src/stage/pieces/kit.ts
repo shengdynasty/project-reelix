@@ -53,7 +53,7 @@ export function labelActor(ctx: PieceContext, role: string, n: number, text: str
   return { id: actorId(ctx, role, n), at, scale, data: { kind: 'label', text, size }, beats }
 }
 
-/** A framed 16:9 photo at scale 1 when `imageId` is given, else the icon as a hero, entering at `t`. */
+/** A framed photo fitted inside a 16:9 box at scale 1 when `imageId` is given, else the icon as a hero, entering at `t`. */
 export function pictureHero(ctx: PieceContext, imageId: string | undefined, icon: string, at: Vec3, t: number): ActorSpec {
   if (imageId) return { id: actorId(ctx, 'photo'), at, scale: 1, data: { kind: 'photo', imageId, fallbackIcon: icon, aspect: 16 / 9 }, beats: [enter(t)] }
   return iconActor(ctx, 'icon', 0, icon, at, HERO_SCALE, [enter(t)])

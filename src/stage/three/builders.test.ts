@@ -159,6 +159,22 @@ describe('with a 2D canvas', () => {
     expect([copy.width, copy.height]).toEqual([1200, 800])
     expect((photo.geometry as PlaneGeometry).parameters.width).toBeCloseTo(4.5)
   })
+  it('keeps a portrait photo upright in its own aspect, fitted inside the frame box', () => {
+    const image = document.createElement('canvas')
+    image.width = 300
+    image.height = 400
+    const { width, height } = (textured(photoOf(image))[0].geometry as PlaneGeometry).parameters
+    expect(width / height).toBeCloseTo(0.75)
+    expect(height).toBeCloseTo(3)
+  })
+  it('fits a wide panorama to the frame box width', () => {
+    const image = document.createElement('canvas')
+    image.width = 1600
+    image.height = 400
+    const { width, height } = (textured(photoOf(image))[0].geometry as PlaneGeometry).parameters
+    expect(width).toBeCloseTo(4.5)
+    expect(height).toBeCloseTo(1.125)
+  })
   it('falls back to the icon when the image would taint the canvas', () => {
     tainted = true
     const o = photoOf(document.createElement('canvas'))
