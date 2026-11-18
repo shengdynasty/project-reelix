@@ -4,7 +4,7 @@ import { PromptBox } from './ui/PromptBox'
 import { Player } from './ui/Player'
 import type { ExportStatus, GenStatus } from './ui/Player'
 import { Settings } from './ui/Settings'
-import { loadSettings, saveSettings } from './ui/settingsStore'
+import { loadSettings, movingPhotosOn, saveSettings } from './ui/settingsStore'
 import type { SettingsState } from './ui/settingsStore'
 import { EXAMPLES } from './examples'
 import type { Example } from './examples'
@@ -23,6 +23,7 @@ import { loadFonts } from './render/text'
 import { createStageHandle, type StageHandle } from './stage/handle'
 import { renderMode, supportsWebGL2 } from './stage/support'
 import { createWatchdog, deviceProfile, type Tier } from './stage/tiers'
+import type { DepthMap } from './stage/types'
 import { addNote } from './ui/notes'
 
 /** The 3D preview's size on the high tier (the medium tier previews at 960x540). */
@@ -49,6 +50,7 @@ export default function App() {
   const [files, setFiles] = useState<File[]>([])
   const [storyboard, setStoryboard] = useState<Storyboard | null>(null)
   const [images, setImages] = useState<Map<string, ImageBitmap>>(new Map())
+  const [depths, setDepths] = useState<Map<string, DepthMap>>(new Map())
   const [clips, setClips] = useState<(Clip | undefined)[]>([])
   const [audio, setAudio] = useState<AudioBuffer | null>(null)
   const [status, setStatus] = useState<GenStatus>({ phase: 'idle' })
@@ -100,7 +102,7 @@ export default function App() {
   const busy = status.phase === 'reading' || status.phase === 'planning' || status.phase === 'voice' || status.phase === 'narrating'
   const preparing = status.phase === 'reading' || status.phase === 'planning'
 
-  const renderOptions = useMemo(() => ({ theme: THEMES[settings.theme], images, captions: settings.captions, stage }), [settings.theme, images, settings.captions, stage])
+  const renderOptions = useMemo(() => ({ theme: THEMES[settings.theme], images, captions: settings.captions, stage, depths }), [settings.theme, images, settings.captions, stage, depths])
 
   // While the voice records, the preview runs on estimated timing (silent, with music) so it stays stable;
   // once every scene has its clip, timing comes from the real narration.
@@ -324,7 +326,14 @@ export default function App() {
           if (id !== genRef.current) return
           result.storyboard = found.storyboard
           corpus.images.push(...found.images)
+          // Depth maps arrive in the background; each one rebuilds the stage with that photo in relief.
+          if (found.images.length && movingPhotosOn(s.movingPhotos, (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection)) {
+            const { depthFor } = await import('./photos')
+            for (const img of found.images)
+              void depthFor(img.url ?? img.id, img.bitmap).then((map) => map && id === genRef.current && setDepths((prev) => new Map(prev).set(img.id, map)))
+          }
         }
+        setDepths(new Map())
         setImages(new Map(corpus.images.map((img) => [img.id, img.bitmap])))
         setSources(result.storyboard.sources)
         setStoryboard(result.storyboard)

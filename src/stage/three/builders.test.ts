@@ -163,6 +163,18 @@ describe('with a 2D canvas', () => {
     const o = buildActor(actor('4:bars:0', { kind: 'bars', values: [350], categories: [''], highlight: null, peak: 700 }), deps)
     expect(o.children.find((c) => c.userData.column === 0)!.userData.baseY).toBeCloseTo(0.75)
   })
+  it('raises a photo with a depth map into relief toward the camera, flat without one', () => {
+    const image = document.createElement('canvas')
+    image.width = 1200
+    image.height = 800
+    const depth = { width: 4, height: 2, data: new Uint8Array([0, 85, 170, 255, 0, 85, 170, 255]) }
+    const o = buildActor(actor('6:photo:0', { kind: 'photo', imageId: 'img1', fallbackIcon: 'drop', aspect: 1.5 }), { ...deps, images: new Map([['img1', image]]), depths: new Map([['img1', depth]]) })
+    const pos = (textured(o)[0].geometry as PlaneGeometry).attributes.position
+    expect(pos.count).toBe(97 * 55)
+    const zs = Array.from({ length: pos.count }, (_, i) => pos.getZ(i))
+    expect(Math.max(...zs) - Math.min(...zs)).toBeCloseTo(0.35, 2)
+    expect((textured(photoOf(image))[0].geometry as PlaneGeometry).attributes.position.count).toBe(4)
+  })
   it('keeps a portrait photo upright in its own aspect, fitted inside the frame box', () => {
     const image = document.createElement('canvas')
     image.width = 300

@@ -1,5 +1,6 @@
 import type { MotionPlan, Shot } from '../motion/plan'
 import type { StageHandle } from '../stage/handle'
+import type { DepthMap } from '../stage/types'
 import type { ImageSource } from './env'
 import { H, W } from './env'
 import type { Theme } from './theme'
@@ -25,6 +26,8 @@ export interface RenderOptions {
   captions: boolean
   /** The 3D stage. When it draws a frame, the 2D world is skipped; the chapter pill, captions and fade still draw. */
   stage?: StageHandle | null
+  /** Depth maps of online photos by image id ("Moving photos"); the 3D stage raises those photos into relief. */
+  depths?: Map<string, DepthMap>
 }
 
 function drawShot(env: ShotEnv) {

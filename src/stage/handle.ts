@@ -70,7 +70,7 @@ export async function createStageHandle(
     draw(ctx, plan, t, ro, samples = 1) {
       if (disposed || stage.lost) return false
       const set = setFor(plan, ro.images)
-      const deps = { palette: paletteFor(ro.theme), images: ro.images }
+      const deps = { palette: paletteFor(ro.theme), images: ro.images, depths: ro.depths }
       const n = Math.max(1, Math.floor(samples))
       ctx.save()
       ctx.setTransform(1, 0, 0, 1, 0, 0)

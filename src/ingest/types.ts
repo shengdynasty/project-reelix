@@ -24,6 +24,8 @@ export interface IngestedImage {
   name: string
   caption: string
   bitmap: ImageBitmap
+  /** Where an online photo came from, which keys its cached depth map. */
+  url?: string
 }
 
 export interface Source {

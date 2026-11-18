@@ -25,7 +25,7 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import { rand } from '../../render/easing'
 import type { ImageSource } from '../../render/env'
 import { WORLD_PER_PX } from '../layout'
-import type { ActorData, ActorPose, ActorSpec } from '../types'
+import type { ActorData, ActorPose, ActorSpec, DepthMap } from '../types'
 import { iconGeometry } from './icons3d'
 import { labelMesh } from './labelMesh'
 import { poseMaterial, solidMaterial, type StagePalette } from './materials'
@@ -34,6 +34,8 @@ export interface BuildDeps {
   palette: StagePalette
   /** Decoded images by id, loaded with `crossOrigin` so they can be uploaded as textures. */
   images: Map<string, ImageSource>
+  /** Depth maps by image id ("Moving photos"): a photo with one is raised into relief. */
+  depths?: Map<string, DepthMap>
 }
 
 type Data<K extends ActorData['kind']> = Extract<ActorData, { kind: K }>
@@ -44,6 +46,9 @@ type Data<K extends ActorData['kind']> = Extract<ActorData, { kind: K }>
 /** Translucency of the duotone slab behind an icon, like the tint behind the 2D icon. */
 const SLAB_OPACITY = 0.35
 const PHOTO_HEIGHT = 3
+/** A photo with a depth map is a grid this fine, raised up to DEPTH_RELIEF toward the camera. */
+const RELIEF_SEGMENTS = [96, 54] as const
+const DEPTH_RELIEF = 0.35
 const PHOTO_BORDER = 0.12
 const PHOTO_DEPTH = 0.12
 /** Longest side of the canvas a photo is copied to; the plane is about 1000 px wide on a 1080 frame, so more only costs memory. */
@@ -124,6 +129,23 @@ function copyToCanvas(image: ImageSource): HTMLCanvasElement | null {
   }
 }
 
+/**
+ * A photo plane of RELIEF_SEGMENTS whose vertices move toward the camera by the depth map (nearest sample), up to
+ * DEPTH_RELIEF, so the camera's dolly shows real parallax. Built once per photo, so frames stay a function of t.
+ */
+function reliefGeometry(w: number, h: number, depth: DepthMap): PlaneGeometry {
+  const geometry = new PlaneGeometry(w, h, RELIEF_SEGMENTS[0], RELIEF_SEGMENTS[1])
+  const pos = geometry.attributes.position
+  for (let i = 0; i < pos.count; i++) {
+    const col = Math.round((pos.getX(i) / w + 0.5) * (depth.width - 1))
+    const row = Math.round((0.5 - pos.getY(i) / h) * (depth.height - 1))
+    pos.setZ(i, (depth.data[row * depth.width + col] / 255) * DEPTH_RELIEF)
+  }
+  pos.needsUpdate = true
+  geometry.computeBoundingSphere()
+  return geometry
+}
+
 /** A framed photo plane, or the fallback icon (`userData.fallback`) when the image is missing or cannot be uploaded. */
 function photoObject(data: Data<'photo'>, deps: BuildDeps): Object3D {
   const image = deps.images.get(data.imageId)
@@ -147,7 +169,8 @@ function photoObject(data: Data<'photo'>, deps: BuildDeps): Object3D {
   frame.castShadow = true
   frame.position.z = -PHOTO_DEPTH / 2 - LIFT
   // Unlit and not tone mapped: the picture shows as it is.
-  const photo = new Mesh(new PlaneGeometry(w, h), new MeshBasicMaterial({ map: texture, transparent: true, toneMapped: false }))
+  const depth = deps.depths?.get(data.imageId)
+  const photo = new Mesh(depth ? reliefGeometry(w, h, depth) : new PlaneGeometry(w, h), new MeshBasicMaterial({ map: texture, transparent: true, toneMapped: false }))
   group.add(frame, photo)
   return group
 }

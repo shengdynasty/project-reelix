@@ -1,10 +1,10 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { ClosedCaptioning, Cpu, Cube, GearSix, Globe, MusicNotes, SpeakerHigh } from '@phosphor-icons/react'
+import { ClosedCaptioning, Cpu, Cube, GearSix, Globe, Images, MusicNotes, SpeakerHigh } from '@phosphor-icons/react'
 import { Toggle, fieldClass } from './controls'
 import { THEMES } from '../render/theme'
 import { VOICES } from '../tts/tts'
 import type { Detail } from '../planner/ruleBased'
-import type { SettingsState } from './settingsStore'
+import { movingPhotosOn, type SettingsState } from './settingsStore'
 
 const DETAILS: { id: Detail; label: string }[] = [
   { id: 'quick', label: 'Quick' },
@@ -125,6 +125,14 @@ export function Settings({ value, onChange, localAi, onLocalAi, visuals }: Props
               disabled={!visuals.supported}
             />
             {visuals.supported ? null : <p className="caption-5 -mt-1 text-ink-dim">Not supported in this browser</p>}
+            {visuals.supported && visuals.on ? (
+              <Toggle
+                checked={movingPhotosOn(value.movingPhotos, (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection)}
+                onChange={(v) => set('movingPhotos', v)}
+                label="Moving photos"
+                icon={<Images size={16} aria-hidden />}
+              />
+            ) : null}
             <Toggle checked={value.lookup} onChange={(v) => set('lookup', v)} label="Fill in short topics from Wikipedia" icon={<Globe size={16} aria-hidden />} />
             {localAi ? (
               <Toggle checked={localAi.enabled} onChange={onLocalAi} label={`Local AI (${localAi.model})`} icon={<Cpu size={16} aria-hidden />} />

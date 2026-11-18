@@ -13,6 +13,8 @@ export interface SettingsState {
   localAi: boolean
   /** 3D visuals: on, off, or null for automatic (on for desktops, off for phones and tablets). */
   visuals3d: boolean | null
+  /** Moving photos (depth parallax): on, off, or null for automatic (off on data saver and slow connections). */
+  movingPhotos: boolean | null
 }
 
 export const DEFAULT_SETTINGS: SettingsState = {
@@ -25,6 +27,7 @@ export const DEFAULT_SETTINGS: SettingsState = {
   lookup: true,
   localAi: true,
   visuals3d: null,
+  movingPhotos: null,
 }
 
 const KEY = 'explainer-settings'
@@ -48,3 +51,8 @@ export function saveSettings(s: SettingsState) {
   }
 }
 
+/** Whether to make depth maps for photos: the choice, or automatic (off on data saver and 2g/3g connections). */
+export function movingPhotosOn(setting: boolean | null, connection?: { saveData?: boolean; effectiveType?: string }): boolean {
+  if (setting !== null) return setting
+  return !connection?.saveData && !/2g|3g/.test(connection?.effectiveType ?? '')
+}

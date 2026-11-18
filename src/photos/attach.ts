@@ -88,7 +88,7 @@ export async function attachPhotos(sb: Storyboard, opts: AttachOptions): Promise
     const bitmap = loaded.get(c.url)
     if (!bitmap) continue
     const imageId = `photo-${images.length + 1}`
-    images.push({ id: imageId, name: c.title, caption: c.title, bitmap })
+    images.push({ id: imageId, name: c.title, caption: c.title, bitmap, url: c.url })
     photos.set(sceneId, { imageId, credit: `Photo: ${c.artist}, ${c.license}` })
     credits.push({ label: `Photo: ${c.title} by ${c.artist} (${c.license})`, url: c.source })
   }

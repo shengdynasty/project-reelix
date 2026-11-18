@@ -351,6 +351,7 @@ function build({ width, height, quality, reducedMotion = false, depthOfField = t
   const built = new Map<number, BuiltPiece>()
   let currentSet: StageSet | null = null
   let currentImages: BuildDeps['images'] | null = null
+  let currentDepths: BuildDeps['depths'] = undefined
   let paletteKey = ''
   const target = new Vector3()
 
@@ -362,10 +363,11 @@ function build({ width, height, quality, reducedMotion = false, depthOfField = t
   const render = (set: StageSet, t: number, deps: BuildDeps): HTMLCanvasElement | null => {
     if (lost) return null
     const palette = JSON.stringify(deps.palette)
-    if (set !== currentSet || deps.images !== currentImages || palette !== paletteKey) {
+    if (set !== currentSet || deps.images !== currentImages || deps.depths !== currentDepths || palette !== paletteKey) {
       disposeAll()
       currentSet = set
       currentImages = deps.images
+      currentDepths = deps.depths
       paletteKey = palette
       scene.background = new Color(deps.palette.background)
       scene.fog = new Fog(deps.palette.fog, FOG_NEAR, FOG_FAR)

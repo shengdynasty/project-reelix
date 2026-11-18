@@ -86,3 +86,10 @@ export interface ActorPose {
   /** 0 to 1 progress of the latest count beat, for count up labels. */
   progress: number
 }
+
+/** A depth map for a photo: one byte per pixel, larger is nearer (Depth Anything's relative depth), row major. */
+export interface DepthMap {
+  width: number
+  height: number
+  data: Uint8Array
+}
