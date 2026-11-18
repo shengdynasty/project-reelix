@@ -15,7 +15,7 @@ It is built for understanding a topic, not for producing content. A video is as 
   HTML, OpenDocument (ODT, ODP, ODS) and images (PNG, JPEG, WebP, GIF). Older binary formats (DOC, PPT, XLS,
   Keynote) need to be saved as one of these first.
 - **Settings** (the gear, top right): detail level, theme, voice, captions, music and effects, Wikipedia
-  lookup, 3D visuals, and local AI when it is available.
+  lookup, 3D visuals, moving photos, and local AI when it is available.
 - **Watch** right on the page, full screen if you like. A small download button saves an MP4.
 
 ## Inferring from limited information
@@ -61,6 +61,13 @@ narration from the same material instead. The public site never probes Ollama.
   960x540 and then to 2D. Without WebGL2, or when the graphics context is lost, the 2D renderer takes over.
   Measured on an M-series Mac: the preview draws a 1280x720 frame in 2.5 to 12 ms (budget 33 ms), and saving
   renders 1920x1080 at about a third of real time (an 81 second video in 27 seconds; budget 1.5x).
+- **Real pictures:** a 3D video made from a Wikipedia article gets freely licensed photos on its title and
+  definition scenes: the article's own images first, then Wikimedia Commons and Openverse searches. Only public
+  domain, CC0, CC BY and CC BY-SA pass; drawings and diagrams are skipped; at most 8 photos and fewer than half of
+  the scenes. A credit line shows while a photo is on screen, and every credit is listed under the video and on
+  the end card. Searches never send text from your own files. With Moving photos on (automatic: off on data
+  saver and slow connections), Depth Anything V2 Small makes a depth map in a worker (WebGPU when present),
+  cached in IndexedDB, and the photo is raised into relief so the camera move shows real parallax.
 - **2D renderer** (when 3D visuals are off or unsupported): a canvas engine with a virtual camera, whip pans
   with motion blur, illustrated icon badges ([Phosphor](https://phosphoricons.com), MIT), pictograms, animated
   charts, definition, timeline and step shots. Captions are timed word by word to the voice in both.
@@ -105,6 +112,7 @@ src/tts/        Kokoro worker pool, clip cache, text normalization
 src/motion/     shot plan (camera path, captions, sound cues), word timing, icons
 src/render/     camera, background, shots and overlays drawn on canvas (the 2D renderer)
 src/stage/      the 3D stage: director, set pieces, camera, three.js actors, post effects, tiers, lab checks
+src/photos/     online photos: sources, licences and scoring, attaching to scenes, depth maps (lazy)
 src/audio/      procedural music and sound effects
 src/player/     preview playback and the master mix
 src/export/     WebCodecs export with fallbacks
