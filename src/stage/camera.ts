@@ -36,6 +36,45 @@ export function holdWindow(shots: Shot[], next: Shot | undefined): { holdStart: 
   return { holdStart: flightEnd(shots[0]), holdEnd: next ? flightStart(next) : shots[shots.length - 1].end }
 }
 
+/** How far the camera pulls back across a shot change inside a piece, so the change's whoosh has motion. */
+export const NUDGE = 0.3
+
+/** The keys' path at `t`, read linearly between the keys around it (the slow dolly cameraPose draws there), focused on its target. */
+function keyAt(keys: CameraKey[], t: number): CameraKey {
+  const i = keys.findLastIndex((k) => k.t <= t)
+  const a = keys[i]
+  const b = keys[i + 1]
+  const p = (t - a.t) / (b.t - a.t)
+  const position = mix(a.position, b.position, p)
+  const target = mix(a.target, b.target, p)
+  return { t, position, target, fov: lerp(a.fov, b.fov, p), focus: dist(position, target) }
+}
+
+/**
+ * A piece's keys with a nudge on each shot change after its first: a key on the path at the change's flight start
+ * and one at its flight end pulled back NUDGE along the view axis, rejoining the path at the next key. Pulling back
+ * only widens the frame. A change that is not inside one slow dolly segment (no key around it, a key inside its
+ * window, or a quick move already) is left alone.
+ */
+export function nudgeKeys(keys: CameraKey[], shots: Shot[]): CameraKey[] {
+  let out = keys
+  for (const shot of shots.slice(1)) {
+    const from = flightStart(shot)
+    const to = flightEnd(shot)
+    const i = out.findLastIndex((k) => k.t < from)
+    if (i < 0 || i >= out.length - 1 || out[i + 1].t <= to || out[i + 1].t - out[i].t <= EASE_MAX_MS) continue
+    const end = keyAt(out, to)
+    const back = end.position.map((v, k) => v - end.target[k]) as Vec3
+    const len = Math.hypot(...back) || 1
+    const position = add(end.position, back.map((v) => (v / len) * NUDGE) as Vec3)
+    out = [...out.slice(0, i + 1), keyAt(out, from), { ...end, position, focus: dist(position, end.target) }, ...out.slice(i + 1)]
+  }
+  return out
+}
+
+/** Whether the segment from key `a` to key `b` moves the camera within ARC_MAX_MS: a flight or a nudge, the motion a whoosh goes with. */
+export const isQuickMove = (a: CameraKey, b: CameraKey) => b.t > a.t && b.t - a.t <= ARC_MAX_MS && dist(a.position, b.position) > 0.01
+
 /** A key at `t` with the camera at `position` looking at `target`, the stage's field of view and the focus on the target. */
 export function cameraKey(t: number, position: Vec3, target: Vec3): CameraKey {
   return { t, position, target, fov: FOV, focus: dist(position, target) }

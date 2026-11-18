@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { PerspectiveCamera, Vector3 } from 'three'
-import { cameraKey, cameraPose } from './camera'
+import { NUDGE, cameraKey, cameraPose, nudgeKeys } from './camera'
+import type { Shot } from '../motion/plan'
 import { directVideo } from './director'
 import { fixturePlan } from './__fixtures__/plan'
 import { easeState } from '../render/easing'
@@ -156,3 +157,23 @@ describe('cameraPose on a hand made timeline', () => {
     expect(pose.roll).toBe(0)
   })
 })
+
+describe('nudgeKeys', () => {
+  // flightStart = start - 0.6 * transition; flightEnd = flightStart + transition.
+  const shot = (start: number, transition: number) => ({ start, transition }) as Shot
+  const keys = [cameraKey(0, [0, 0, 10], [0, 0, 0]), cameraKey(10000, [0, 0, 8], [0, 0, 0])]
+  it('pulls the camera back NUDGE along its view axis across each later shot change, then rejoins the dolly', () => {
+    const out = nudgeKeys(keys, [shot(0, 500), shot(4300, 500)])
+    expect(out.map((k) => k.t)).toEqual([0, 4000, 4500, 10000])
+    expectVec(out[1].position, [0, 0, 10 - 2 * 0.4])
+    expectVec(out[2].position, [0, 0, 10 - 2 * 0.45 + NUDGE])
+    expectVec(out[2].target, [0, 0, 0])
+    expect(out[3]).toEqual(keys[1])
+  })
+  it('leaves the keys alone for a single shot, or a shot change that is already a move', () => {
+    expect(nudgeKeys(keys, [shot(0, 500)])).toEqual(keys)
+    const busy = [cameraKey(0, [0, 0, 10], [0, 0, 0]), cameraKey(4200, [0, 0, 9], [0, 0, 0]), cameraKey(10000, [0, 0, 8], [0, 0, 0])]
+    expect(nudgeKeys(busy, [shot(0, 500), shot(4300, 500)])).toEqual(busy)
+  })
+})
+

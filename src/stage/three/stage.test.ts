@@ -75,4 +75,10 @@ describe('cueSkew', () => {
     const shifted = { ...set, pieces: set.pieces.map((p) => (p.actors.some((a) => a.data.kind === 'token') ? { ...p, actors: p.actors.map((a) => ({ ...a, beats: a.beats.map(late) })) } : p)) }
     expect(cueSkew(plan, shifted)).toBeGreaterThan(150)
   })
+  it('catches a whoosh in the middle of a hold, away from every camera move', () => {
+    const keys = set.pieces.flatMap((p) => p.camera)
+    const i = keys.findIndex((k, j) => j > 0 && k.t - keys[j - 1].t > 2000)
+    const mid = (keys[i - 1].t + keys[i].t) / 2
+    expect(cueSkew({ ...plan, sfx: [...plan.sfx, { t: mid, kind: 'whoosh', gain: 1, pan: 0 }] }, set)).toBeGreaterThan(150)
+  })
 })

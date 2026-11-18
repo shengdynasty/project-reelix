@@ -2,7 +2,7 @@
 // actors and camera keys. It is pure data from pure functions, so the same plan always gives the same set.
 import { contentWords } from '../input/parseText'
 import type { MotionPlan } from '../motion/plan'
-import { flightStart } from './camera'
+import { flightStart, nudgeKeys } from './camera'
 import { pieceOrigin } from './layout'
 import { buildPiece, type PieceContext } from './pieces'
 import { groupShots } from './timing'
@@ -44,6 +44,7 @@ export function directVideo(plan: MotionPlan, opts: DirectOptions): StageSet {
       heroes: [...heroes],
       topicWords,
     })
+    piece.camera = nudgeKeys(piece.camera, shots)
     const from = pieces.at(-1)?.camera.at(-1)
     if (from) piece.camera.unshift({ ...from, t: flightStart(shots[0]), position: [...from.position], target: [...from.target] })
     pieces.push(piece)
