@@ -96,6 +96,27 @@ describe('attachPhotos', () => {
     await attachPhotos(sb, { article: 'Diffuse sky radiation', searchScenes: true, load })
     expect(article).not.toHaveBeenCalled()
   })
+  it('never uses a picture the video already shows', async () => {
+    sources([photo(1), photo(2)])
+    const out = await attachPhotos(fixtureStoryboard(), { article: 'Diffuse sky radiation', searchScenes: true, load, exclude: [photo(1).url] })
+    expect(out.storyboard.sources.map((s) => s.url)).not.toContain(photo(1).source)
+  })
+  it('stops searching and decoding at the deadline and closes pictures that arrive late', async () => {
+    article.mockReset().mockResolvedValue([])
+    commons.mockReset().mockImplementation(() => new Promise((resolve) => setTimeout(() => resolve([]), 60)))
+    openverse.mockReset().mockResolvedValue([])
+    await attachPhotos(fixtureStoryboard(), { article: 'Diffuse sky radiation', searchScenes: true, load, timeoutMs: 20 })
+    await new Promise((resolve) => setTimeout(resolve, 150))
+    expect(openverse).not.toHaveBeenCalled()
+    sources([photo(1)])
+    let seen: AbortSignal | undefined
+    let closed = 0
+    const late = (_url: string, signal?: AbortSignal) => ((seen = signal), new Promise<ImageBitmap>((resolve) => setTimeout(() => resolve({ close: () => closed++ } as unknown as ImageBitmap), 60)))
+    await attachPhotos(fixtureStoryboard(), { article: 'Diffuse sky radiation', searchScenes: true, load: late, timeoutMs: 20 })
+    await new Promise((resolve) => setTimeout(resolve, 150))
+    expect(seen?.aborted).toBe(true)
+    expect(closed).toBe(1)
+  })
   it('returns what was ready when the time runs out', async () => {
     sources([photo(1), photo(2)])
     const never = () => new Promise<ImageBitmap>(() => {})

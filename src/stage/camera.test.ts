@@ -105,14 +105,13 @@ describe('cameraPose on a hand made timeline', () => {
       }
     }
   })
-  it('shortens and softens a flight under reduced motion: it holds through the first half, then eases level over the second', () => {
+  it('softens a flight under reduced motion: level, without roll, and never faster than the full flight', () => {
     const timeline = setOf([cameraKey(0, [0, 0, 10], [0, 0, 0]), cameraKey(800, [14, 0, 10], [14, 0, 0])])
-    const at = (t: number) => cameraPose(timeline, t, { reducedMotion: true })
-    for (const t of [0, 200, 400]) expectVec(at(t).position, [0, 0, 10])
-    expectVec(at(600).position, [7, 0, 10])
-    expectVec(at(500).position, [14 * easeState(0.25), 0, 10])
-    expectVec(at(800).position, [14, 0, 10])
-    for (const t of [100, 300, 500, 700]) expect(at(t).roll).toBe(0)
+    const at = (t: number, reducedMotion: boolean) => cameraPose(timeline, t, { reducedMotion })
+    expectVec(at(400, true).position, [7, 0, 10])
+    const peak = (reducedMotion: boolean) => Math.max(...Array.from({ length: 50 }, (_, i) => dist(at(i * 16, reducedMotion).position, at(i * 16 + 16, reducedMotion).position)))
+    expect(peak(true)).toBeLessThanOrEqual(peak(false) + 1e-9)
+    for (const t of [100, 300, 500, 700]) expect(at(t, true).roll).toBe(0)
     expect(cameraPose(timeline, 400, { reducedMotion: false })).toEqual(cameraPose(timeline, 400))
   })
   it('treats a zero length segment as a hold, with no NaN and no jump', () => {

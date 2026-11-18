@@ -123,8 +123,8 @@ export const StoryboardSchema = z.object({
   title: z.string(),
   planner: z.enum(['rule-based', 'ollama']),
   scenes: z.array(SceneSchema).min(1),
-  /** Where the content came from, shown under the player and on the end card. */
-  sources: z.array(z.object({ label: z.string(), url: z.string().optional() })),
+  /** Where the content came from, shown under the player and on the end card; a photo's short `credit` ("artist (licence)") goes on the card's photo line. */
+  sources: z.array(z.object({ label: z.string(), url: z.string().optional(), credit: z.string().optional() })),
 })
 export type Storyboard = z.infer<typeof StoryboardSchema>
 

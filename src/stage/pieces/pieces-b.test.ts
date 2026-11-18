@@ -517,6 +517,17 @@ function columnPoints(p: SetPiece): { name: string; at: Vec3 }[] {
 /** A scene with four word item names as wide as a label runs. */
 const wideItems = (n: number) => ['Gather the dry ingredients', 'Measure every liquid twice', 'Combine them without hurry', 'Rest the finished batter', 'Bake until golden brown'].slice(0, n)
 
+describe('set pieces B: end card credits', () => {
+  const wiki = { label: 'Wikipedia: Black hole', url: 'https://en.wikipedia.org/wiki/Black_hole' }
+  const photoA = { label: 'Photo: How to Measure the Spin of a Black Hole by NASA/JPL-Caltech (Public domain)', url: 'https://commons.wikimedia.org/a', credit: 'NASA/JPL-Caltech (Public domain)' }
+  const photoB = { label: 'Photo: Black Hole Outflows From Centaurus A by ESO (CC BY 4.0)', url: 'https://commons.wikimedia.org/b', credit: 'ESO (CC BY 4.0)' }
+  it('gives photo credits a short line of their own, so the full list fits the card', () => {
+    const lines = cardLines('Black holes', [wiki, photoA, photoB])
+    expect(lines).toEqual(['Black holes', 'Sources: Wikipedia: Black hole', 'Photos: NASA/JPL-Caltech (Public domain) · ESO (CC BY 4.0)', 'Made with Project Reelix'])
+    lines.forEach((line) => expect(line.length * LABEL_PX.small * 0.6).toBeLessThanOrEqual(2 * 1200))
+  })
+})
+
 describe('set pieces B: framing with label extents', () => {
   it('keeps every label, icon and station of every piece inside the frame at every key', () =>
     set.pieces.filter((p) => ['chart', 'timeline', 'steps', 'summary', 'end', 'point', 'stat', 'compare', 'definition', 'intro', 'image'].includes(p.kind)).forEach((p) => expect(outside(p)).toEqual([])))

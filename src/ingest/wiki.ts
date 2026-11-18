@@ -12,7 +12,7 @@ export interface WikiResult {
   doc: Doc
   title: string
   url: string
-  image: { bitmap: ImageBitmap; caption: string } | null
+  image: { bitmap: ImageBitmap; caption: string; url: string } | null
 }
 
 async function api(params: Record<string, string>, signal?: AbortSignal): Promise<unknown> {
@@ -103,7 +103,7 @@ export async function lookupTopic(query: string, signal?: AbortSignal): Promise<
             .trim()
           const titleWords = page.title.toLowerCase().split(/\s+/)
           const descriptive = fromFile && !/\d{2,}|\b(figure|fig|img|dsc|image|file|diagram|chart)\b/i.test(fromFile) && titleWords.some((w) => fromFile.toLowerCase().includes(w.slice(0, 5)))
-          image = { bitmap, caption: descriptive ? fromFile : page.title }
+          image = { bitmap, caption: descriptive ? fromFile : page.title, url: page.thumbnail.source }
         }
       } catch {
         // The article still works without its picture.

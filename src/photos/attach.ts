@@ -6,7 +6,7 @@ import { contentWords } from '../input/parseText'
 import type { Scene, Storyboard } from '../model/storyboard'
 import { kitModel } from '../stage/kits'
 import { labelFor } from '../stage/labels'
-import { assignPhotos, scorePhoto, type PhotoCandidate } from './select'
+import { assignPhotos, plainText, scorePhoto, type PhotoCandidate } from './select'
 import { articlePhotos, commonsPhotos, openversePhotos } from './source'
 
 /** Scenes whose 3D piece shows one hero object, which a photo can replace. */
@@ -17,6 +17,8 @@ const TIMEOUT_MS = 8000
 const MAX_SEARCHES = 3
 /** Rounds of assigning again after decode failures. */
 const ROUNDS = 3
+/** The end card's photo line keeps each artist this short, so every credit fits. */
+const SHORT_ARTIST = 32
 
 export interface AttachOptions {
   /** The Wikipedia article title the video's text came from. */
@@ -25,7 +27,9 @@ export interface AttachOptions {
   searchScenes: boolean
   signal?: AbortSignal
   timeoutMs?: number
-  load?: (url: string) => Promise<ImageBitmap>
+  load?: (url: string, signal?: AbortSignal) => Promise<ImageBitmap>
+  /** Pixel URLs the video already shows (the article's lead image), never used again. */
+  exclude?: string[]
 }
 
 async function loadBitmap(url: string, signal?: AbortSignal): Promise<ImageBitmap> {
@@ -50,29 +54,42 @@ export async function attachPhotos(sb: Storyboard, opts: AttachOptions): Promise
   const canShow = (s: Scene) => ELIGIBLE.has(s.visual.kind) && !s.molecule && !kitted(s)
   const eligible = sb.scenes.filter(canShow)
   if (!eligible.length) return unchanged
-  const load = opts.load ?? ((url: string) => loadBitmap(url, opts.signal))
+  // The deadline stops the work, not just the wait: searches and decodes after it are canceled.
+  const ctrl = new AbortController()
+  const stop = () => ctrl.abort()
+  opts.signal?.addEventListener('abort', stop)
+  const load = opts.load ?? loadBitmap
+  const skip = new Set(opts.exclude ?? [])
   const scenes = sb.scenes.map((s) => ({ id: s.id, sentence: s.narration, eligible: canShow(s), place: false, people: [] }))
   const fits = (s: Scene, list: PhotoCandidate[]) => list.some((c) => scorePhoto(c, s.narration, { place: false, people: [] }) > 0)
   let picks = new Map<string, PhotoCandidate>()
   const loaded = new Map<string, ImageBitmap>()
 
   const work = (async () => {
-    let candidates = await articlePhotos(opts.article, opts.signal)
+    const usable = (list: PhotoCandidate[]) => list.filter((c) => !skip.has(c.url))
+    let candidates = usable(await articlePhotos(opts.article, ctrl.signal))
     if (opts.searchScenes) {
       const topic = contentWords(sb.title)
       for (const search of [commonsPhotos, openversePhotos]) {
-        for (const s of eligible.filter((e) => !fits(e, candidates)).slice(0, MAX_SEARCHES)) candidates = [...candidates, ...(await search(phraseOf(s, topic), opts.signal))]
+        for (const s of eligible.filter((e) => !fits(e, candidates)).slice(0, MAX_SEARCHES)) {
+          if (ctrl.signal.aborted) return
+          candidates = [...candidates, ...usable(await search(phraseOf(s, topic), ctrl.signal))]
+        }
       }
     }
     const failed = new Set<string>()
     for (let round = 0; round < ROUNDS; round++) {
+      if (ctrl.signal.aborted) return
       picks = assignPhotos(scenes, candidates.filter((c) => !failed.has(c.url)))
       const todo = [...picks.values()].filter((c) => !loaded.has(c.url))
       if (!todo.length) return
       await Promise.all(
         todo.map(async (c) => {
           try {
-            loaded.set(c.url, await load(c.url))
+            const bitmap = await load(c.url, ctrl.signal)
+            // A picture decoded after the deadline is never shown: give its memory back.
+            if (ctrl.signal.aborted) bitmap.close?.()
+            else loaded.set(c.url, bitmap)
           } catch {
             failed.add(c.url)
           }
@@ -84,6 +101,8 @@ export async function attachPhotos(sb: Storyboard, opts: AttachOptions): Promise
   let timer: ReturnType<typeof setTimeout> | undefined
   await Promise.race([work, new Promise((resolve) => (timer = setTimeout(resolve, opts.timeoutMs ?? TIMEOUT_MS)))])
   clearTimeout(timer)
+  stop()
+  opts.signal?.removeEventListener('abort', stop)
   if (opts.signal?.aborted) throw new DOMException('Canceled', 'AbortError')
 
   const images: IngestedImage[] = []
@@ -95,8 +114,11 @@ export async function attachPhotos(sb: Storyboard, opts: AttachOptions): Promise
     const imageId = `photo-${images.length + 1}`
     images.push({ id: imageId, name: c.title, caption: c.title, bitmap, url: c.url })
     photos.set(sceneId, { imageId, credit: `Photo: ${c.artist}, ${c.license}` })
-    credits.push({ label: `Photo: ${c.title} by ${c.artist} (${c.license})`, url: c.source })
+    credits.push({ label: `Photo: ${c.title} by ${c.artist} (${c.license})`, url: c.source, credit: `${plainText(c.artist, SHORT_ARTIST)} (${c.license})` })
   }
+  // Pictures decoded for a pick that a later round replaced are never shown either.
+  const shown = new Set([...picks.values()].map((c) => c.url))
+  for (const [url, bitmap] of loaded) if (!shown.has(url)) bitmap.close?.()
   if (!images.length) return unchanged
   return {
     storyboard: { ...sb, scenes: sb.scenes.map((s) => (photos.has(s.id) ? { ...s, photo: photos.get(s.id) } : s)), sources: [...sb.sources, ...credits] },

@@ -23,7 +23,8 @@ export function drawEnd(env: ShotEnv) {
   })
   const y = -10 + f.size + (f.lines.length - 1) * f.size * 1.08
   const k = ease(progress(t, 400, 600))
-  const sources = plan.storyboard.sources.map((s) => s.label.replace(/^Wikipedia: .*/, 'Wikipedia'))
+  // Online photos only show on the 3D stage, so the 2D card leaves their credits to the 3D one and the player.
+  const sources = plan.storyboard.sources.filter((s) => !s.credit).map((s) => s.label.replace(/^Wikipedia: .*/, 'Wikipedia'))
   const unique = [...new Set(sources)]
   ctx.save()
   ctx.globalAlpha *= k

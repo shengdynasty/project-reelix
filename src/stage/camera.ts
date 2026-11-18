@@ -107,7 +107,7 @@ const holdAt = (key: CameraKey): CameraPose => ({ position: [...key.position], t
  * the last the camera holds. Between two keys at most EASE_MAX_MS apart it eases from one to the other; further apart
  * it moves linearly, a slow dolly. A segment that covers more than ARC_UNITS within ARC_MAX_MS is a flight between
  * pieces: the path lifts by ARC_LIFT * sin(pi p) and the camera rolls by ARC_ROLL * sin(pi p); with `reducedMotion` it
- * flies level, without roll, over the second half of its window only.
+ * flies level and without roll over its whole window, never faster than the full flight.
  * A segment with no length, such as a piece's last key and the next piece's copy of it, is a hold at its later key.
  * Pure: the same set and t always give the same pose, so preview and export can ask for any t in any order, and the
  * keys are only read. With no keys at all the camera holds HOLD_IN from the world origin.
@@ -124,8 +124,7 @@ export function cameraPose(set: StageSet, t: number, opts: CameraPoseOptions = {
   if (dt <= 0) return holdAt(b)
   const p = (t - a.t) / dt
   const flight = dt <= ARC_MAX_MS && dist(a.position, b.position) > ARC_UNITS
-  // Reduced motion shortens a flight to the second half of its window and softens it (no lift, no roll).
-  const k = flight && opts.reducedMotion ? easeState(Math.max(0, 2 * p - 1)) : dt <= EASE_MAX_MS ? easeState(p) : p
+  const k = dt <= EASE_MAX_MS ? easeState(p) : p
   const pose: CameraPose = { position: mix(a.position, b.position, k), target: mix(a.target, b.target, k), fov: lerp(a.fov, b.fov, k), focus: lerp(a.focus, b.focus, k), roll: 0 }
   if (flight && !opts.reducedMotion) {
     const arc = Math.sin(Math.PI * p)

@@ -25,6 +25,7 @@ import { renderMode, supportsWebGL2 } from './stage/support'
 import { createWatchdog, deviceProfile, type Tier } from './stage/tiers'
 import type { DepthMap } from './stage/types'
 import { addNote } from './ui/notes'
+import { addOnlineVisuals } from './ui/onlineVisuals'
 
 /** The 3D preview's size on the high tier (the medium tier previews at 960x540). */
 const PREVIEW_SIZE = { width: 1280, height: 720 }
@@ -320,19 +321,19 @@ export default function App() {
         // Online photos only show on the 3D stage, and only for text that came from a Wikipedia article.
         if (s.lookup && corpus.article && modeRef.current === '3d') {
           setStatus({ phase: 'planning', message: 'Finding photos' })
-          const { attachMolecules, attachPhotos } = await import('./photos')
           const searchScenes = corpus.docs.every((d) => d.kind === 'wiki')
-          // Structures first: a scene that shows a molecule is not given a photo it would not show.
-          const withMolecules = await attachMolecules(result.storyboard, { signal: ctrl.signal })
-          const found = await attachPhotos(withMolecules, { article: corpus.article, searchScenes, signal: ctrl.signal })
+          const exclude = corpus.images.flatMap((img) => (img.url ? [img.url] : []))
+          const found = await addOnlineVisuals(result.storyboard, { article: corpus.article, searchScenes, exclude, signal: ctrl.signal })
           if (id !== genRef.current) return
           result.storyboard = found.storyboard
           corpus.images.push(...found.images)
           // Depth maps arrive in the background; each one rebuilds the stage with that photo in relief.
           if (found.images.length && movingPhotosOn(s.movingPhotos, (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection)) {
-            const { depthFor } = await import('./photos')
-            for (const img of found.images)
-              void depthFor(img.url ?? img.id, img.bitmap).then((map) => map && id === genRef.current && setDepths((prev) => new Map(prev).set(img.id, map)))
+            void import('./photos')
+              .then(({ depthFor }) => {
+                for (const img of found.images) void depthFor(img.url ?? img.id, img.bitmap).then((map) => map && id === genRef.current && setDepths((prev) => new Map(prev).set(img.id, map)))
+              })
+              .catch(() => {})
           }
         }
         setDepths(new Map())

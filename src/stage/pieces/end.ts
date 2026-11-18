@@ -22,10 +22,14 @@ export function shortTokens(line: string): string {
   return line.trim().split(/\s+/).filter(Boolean).map((w) => (w.length <= MAX_TOKEN ? w : w.slice(0, MAX_TOKEN - 1) + '…')).join(' ')
 }
 
-/** The card's lines: the title, "Sources: " with the source labels (never their URLs) and the maker's mark; empty lines left out. */
+/**
+ * The card's lines: the title, "Sources: " with the source labels (never their URLs), "Photos: " with each photo's
+ * short credit, so every credit fits, and the maker's mark; empty lines left out.
+ */
 export function cardLines(title: string, sources: Storyboard['sources']): string[] {
-  const labels = [...new Set(sources.map((s) => s.label.trim()).filter(Boolean))]
-  return [title, labels.length ? `Sources: ${labels.join(' · ')}` : '', MADE_WITH].map(shortTokens).filter(Boolean)
+  const labels = [...new Set(sources.filter((s) => !s.credit).map((s) => s.label.trim()).filter(Boolean))]
+  const photos = [...new Set(sources.flatMap((s) => (s.credit ? [s.credit.trim()] : [])))]
+  return [title, labels.length ? `Sources: ${labels.join(' · ')}` : '', photos.length ? `Photos: ${photos.join(' · ')}` : '', MADE_WITH].map(shortTokens).filter(Boolean)
 }
 
 /** The camera `deg` degrees around AIM from the front, ORBIT_DISTANCE away and ORBIT_RISE above. */
