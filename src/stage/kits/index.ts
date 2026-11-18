@@ -16,6 +16,7 @@ export type ModelName =
   | 'antibody'
   | 'prism'
   | 'scatter'
+  | 'globe'
 
 export interface KitContext {
   /** The video's title or question. */
@@ -48,6 +49,7 @@ const MODELS: { model: ModelName; words: string[] }[] = [
   { model: 'antibody', words: ['antibody', 'antibodies', 'immune', 'immunity', 'lymphocyte', 'white blood cell'] },
   { model: 'virus', words: ['virus', 'viral', 'pathogen', 'vaccine', 'vaccination', 'bacteria', 'infection'] },
   { model: 'dna', words: ['dna', 'gene', 'genetic', 'genetics', 'chromosome', 'genome', 'double helix'] },
+  { model: 'globe', words: ['continent', 'countries', 'country', 'capital city', 'geography', 'latitude', 'longitude', 'hemisphere', 'equator', 'world map'] },
   { model: 'cell', words: ['mitochondria', 'mitochondrion', 'chloroplast', 'organelle', 'photosynthesis', 'cytoplasm', 'cell', 'nucleus', 'membrane'] },
 ]
 

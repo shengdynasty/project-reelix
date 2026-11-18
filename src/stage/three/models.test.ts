@@ -13,7 +13,7 @@ const meshes = (name: ModelName) => {
 }
 
 describe('buildModel', () => {
-  it('has a builder for every model the kits can choose', () => expect(MODEL_NAMES.length).toBe(13))
+  it('has a builder for every model the kits can choose', () => expect(MODEL_NAMES.length).toBe(14))
   it.each(MODEL_NAMES)('builds %s from real meshes inside the unit box an icon fills', (name) => {
     const o = buildModel(name, palette)
     o.updateMatrixWorld(true)

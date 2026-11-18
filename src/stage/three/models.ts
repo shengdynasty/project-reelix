@@ -22,7 +22,7 @@ import type { ModelName } from '../kits'
 import type { Molecule } from '../kits/molecule'
 import { solidMaterial, type StagePalette } from './materials'
 
-export const MODEL_NAMES: ModelName[] = ['black-hole', 'galaxy', 'planet', 'star', 'volcano', 'water-cycle', 'strata', 'cell', 'dna', 'virus', 'antibody', 'prism', 'scatter']
+export const MODEL_NAMES: ModelName[] = ['black-hole', 'galaxy', 'planet', 'star', 'volcano', 'water-cycle', 'strata', 'cell', 'dna', 'virus', 'antibody', 'prism', 'scatter', 'globe']
 
 /** How a part moves with time (moveModel): a steady turn about y, a steady turn in its own plane (z), a sway, or a drift down. */
 export type ModelMotion = 'spin' | 'twirl' | 'roll' | 'fall'
@@ -55,6 +55,32 @@ function rod(a: Vector3, b: Vector3, radius: number, material: Material): Mesh {
 }
 
 const BUILDERS: Record<ModelName, (p: StagePalette) => Group> = {
+  globe: (p) => {
+    const g = new Group()
+    const earth = new Group()
+    earth.userData.motion = 'spin'
+    earth.add(mesh(new SphereGeometry(0.4, 48, 24), solidMaterial(series(p, 0), { roughness: 0.7 })))
+    // Land as low domes on the sphere, then a graticule: three parallels and four meridians.
+    for (const [lat, lon, r] of [[0.5, 0.3, 0.16], [-0.3, 1.2, 0.13], [0.2, 2.6, 0.18], [-0.6, 3.8, 0.1], [0.9, 4.9, 0.12]] as const) {
+      const at = new Vector3(Math.cos(lat) * Math.cos(lon), Math.sin(lat), Math.cos(lat) * Math.sin(lon)).multiplyScalar(0.36)
+      earth.add(mesh(new SphereGeometry(r, 16, 8), solidMaterial(series(p, 2), { roughness: 0.9 }), at.toArray() as [number, number, number]))
+    }
+    for (const lat of [-0.6, 0, 0.6]) {
+      const parallel = mesh(new TorusGeometry(0.41 * Math.cos(lat), 0.004, 4, 64), solidMaterial(p.muted), [0, 0.41 * Math.sin(lat), 0])
+      parallel.rotation.x = Math.PI / 2
+      earth.add(parallel)
+    }
+    for (let i = 0; i < 4; i++) {
+      const meridian = mesh(new TorusGeometry(0.41, 0.004, 4, 64), solidMaterial(p.muted))
+      meridian.rotation.y = (i * Math.PI) / 4
+      earth.add(meridian)
+    }
+    g.add(earth)
+    // A pin on the front of the globe, where the camera sees it.
+    g.add(rod(new Vector3(0.12, 0.2, 0.36), new Vector3(0.16, 0.34, 0.46), 0.012, solidMaterial(p.ink)))
+    g.add(mesh(new SphereGeometry(0.05, 16, 8), glow(p), [0.16, 0.36, 0.47]))
+    return g
+  },
   'black-hole': (p) => {
     const g = new Group()
     g.add(mesh(new SphereGeometry(0.2, 32, 16), new MeshBasicMaterial({ color: '#000000' })))

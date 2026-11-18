@@ -20,6 +20,10 @@ describe('kitModel', () => {
     expect(kitModel({ topic: 'Photosynthesis', sentence: 'Chloroplasts turn sunlight into sugar.' })).toBe('cell')
     expect(kitModel({ topic: 'Genetics', sentence: 'DNA carries the genes in a double helix.' })).toBe('dna')
   })
+  it('shows a globe for places and geography', () => {
+    expect(kitModel({ topic: 'The continents', sentence: 'Seven continents sit on the tectonic plates of the Earth.' })).toBe('globe')
+    expect(kitModel({ topic: 'Countries of Africa', sentence: 'Africa has 54 countries.' })).toBe('globe')
+  })
   it('stays generic when a keyword is used in another sense or nothing matches', () => {
     expect(kitModel({ topic: 'Cell phone batteries', sentence: 'A cell phone battery stores energy in lithium.' })).toBeNull()
     expect(kitModel({ topic: 'A light lunch', sentence: 'Salads make a light lunch.' })).toBeNull()
