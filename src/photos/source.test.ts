@@ -52,6 +52,11 @@ describe('articlePhotos', () => {
     expect(url.searchParams.get('generator')).toBe('images')
     expect(url.searchParams.get('titles')).toBe('Black hole')
   })
+  it('keeps a long description whole, so a late word such as diagram still counts', async () => {
+    const long = 'The intense gravitational field of a foreground black hole acts like a powerful lens in space. In the diagram, the lens brightens a star.'
+    stub(wiki([page('File:Lens.jpg', {}, { description: long })]))
+    expect((await articlePhotos('Black hole'))[0].description).toBe(long)
+  })
   it('uses the original size when the picture is smaller than the thumbnail asked for', async () => {
     stub(wiki([page('File:Small.jpg', { width: 700, height: 346, url: 'https://upload.wikimedia.org/x/Small.jpg', thumburl: 'https://upload.wikimedia.org/x/Small.jpg' })]))
     const [c] = await articlePhotos('Black hole')

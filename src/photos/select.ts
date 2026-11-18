@@ -29,6 +29,8 @@ const MIN_WIDTH = 640
 const SHARP_WIDTH = 1200
 const PENALTY = 1.5
 const CREDIT_CHARS = 80
+/** Descriptions are scored, not shown, so they keep enough to catch a late "In the diagram". */
+export const DESCRIPTION_CHARS = 600
 
 const NOT_FREE = /(^|[\s-])(nc|nd)([\s-]|$)|non.?commercial|no.?deriv|fair use/
 const DRAWING = /\b(diagram|chart|graph|schematic|infographic|icon|plot)\b/i
@@ -48,16 +50,16 @@ export function licenseOf(raw: string): License | null {
 
 const ENTITIES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', '#39': "'" }
 
-/** Metadata HTML as a credit can show it: no tags, entities decoded, one line, at most 80 characters cut at a word. */
-export function plainText(html: string): string {
+/** Metadata HTML as plain text: no tags, entities decoded, one line, at most `max` characters (a credit's 80) cut at a word. */
+export function plainText(html: string, max = CREDIT_CHARS): string {
   const text = html
     .replace(/<[^>]*>/g, ' ')
     .replace(/&(#\d+|[a-z]+|#39);/gi, (m, e: string) => ENTITIES[e.toLowerCase()] ?? (e.startsWith('#') ? String.fromCharCode(Number(e.slice(1))) : m))
     .replace(/\s+/g, ' ')
     .trim()
-  if (text.length <= CREDIT_CHARS) return text
-  const cut = text.slice(0, CREDIT_CHARS + 1).lastIndexOf(' ')
-  return text.slice(0, cut > 0 ? cut : CREDIT_CHARS)
+  if (text.length <= max) return text
+  const cut = text.slice(0, max + 1).lastIndexOf(' ')
+  return text.slice(0, cut > 0 ? cut : max)
 }
 
 /**

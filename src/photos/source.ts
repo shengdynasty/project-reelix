@@ -1,6 +1,6 @@
 // Photo candidates from the three keyless sources the spec allows: the Wikipedia article's own images, a Commons file
 // search, and Openverse. Every client answers [] when its source fails, so a video never waits on a broken source.
-import { licenseOf, plainText, type PhotoCandidate } from './select'
+import { DESCRIPTION_CHARS, licenseOf, plainText, type PhotoCandidate } from './select'
 
 const WIKIPEDIA = 'https://en.wikipedia.org/w/api.php'
 const COMMONS = 'https://commons.wikimedia.org/w/api.php'
@@ -47,7 +47,7 @@ function fromImageInfo(page: { title: string; imageinfo?: ImageInfo[] }, origin:
     width: thumb ? ii.thumbwidth! : ii.width,
     height: thumb ? ii.thumbheight! : ii.height,
     title: page.title.replace(/^File:/, '').replace(/\.[a-z0-9]+$/i, '').replace(/_/g, ' '),
-    description: plainText(meta.ImageDescription?.value ?? ''),
+    description: plainText(meta.ImageDescription?.value ?? '', DESCRIPTION_CHARS),
     artist: plainText(meta.Artist?.value ?? '') || 'Wikimedia Commons',
     license,
     source: ii.descriptionurl ?? ii.url,
