@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>Stage lab</title>
+    <style>
+      :root { color-scheme: dark; }
+      body { margin: 0; padding: 16px; background: #111; color: #ddd; font: 14px/1.4 system-ui, sans-serif; }
+      header { display: flex; gap: 16px; align-items: baseline; margin-bottom: 12px; }
+      header strong { font-size: 16px; }
+      #status { color: #9b9b9b; }
+      .frame { position: relative; width: min(100%, 1280px); aspect-ratio: 16 / 9; background: #000; }
+      .frame canvas { display: block; width: 100%; height: 100%; }
+      /* Where the captions and the progress bar live in the final frame: nothing should be clipped by it. */
+      .guide { position: absolute; left: 0; right: 0; bottom: 0; border-top: 1px dashed rgba(255, 80, 80, 0.8); background: rgba(255, 80, 80, 0.08); pointer-events: none; }
+      .controls { display: flex; gap: 16px; align-items: center; margin-top: 12px; width: min(100%, 1280px); }
+      .controls input[type='range'] { flex: 1; }
+      #clock { font-variant-numeric: tabular-nums; min-width: 7ch; }
+      .hint { color: #9b9b9b; margin-top: 12px; }
+      code { color: #c3c2b7; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <strong>Stage lab</strong>
+      <span id="status">Starting</span>
+    </header>
+    <div class="frame">
+      <canvas id="view" width="1280" height="720"></canvas>
+      <div id="guide" class="guide" hidden></div>
+    </div>
+    <div class="controls">
+      <input id="time" type="range" min="0" max="0" step="33" value="0" aria-label="Time" />
+      <span id="clock">0.000 s</span>
+      <label><input id="guide-toggle" type="checkbox" /> captions area</label>
+    </div>
+    <p class="hint">
+      Console: <code>__lab.render(t)</code>, <code>report()</code>, <code>hashAt(t)</code>, <code>scrub(from, to, step)</code>,
+      <code>bench(frames)</code>, <code>loseContext()</code>, <code>restoreContext()</code>,
+      <code>load('fixture' | { example } | { file })</code>, <code>accept()</code>. URL: <code>?example=sky</code>,
+      <code>?file=volcanoes.pdf</code>, <code>?theme=paper</code>, <code>?quality=export</code>, <code>?reduced</code>.
+    </p>
+    <script type="module" src="/src/stage/lab.ts"></script>
+  </body>
+</html>

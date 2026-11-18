@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+/* Design tokens. Surfaces come from the approved dark set; ink and accent match sheng-yan.com. */
+@theme {
+  --font-sans: "Geist Variable", system-ui, -apple-system, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, monospace;
+
+  --color-base: #000000;
+  --color-panel: #181818;
+  --color-field: #1f1f1f;
+  --color-raise: #272727;
+  --color-edge: #313131;
+  --color-ink: #f5f2ea;
+  --color-ink-soft: #c3c2b7;
+  --color-ink-dim: #898781;
+  --color-accent: #2ca942;
+  --color-accent-ink: #000000;
+  --color-danger: #e66767;
+
+  --ease-base: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Named text styles (landing-page-design B1). Use these instead of loose size and weight utilities. */
+@utility heading-4 { font-size: var(--text-3xl); line-height: var(--text-3xl--line-height); font-weight: 600; }
+@utility heading-5 { font-size: var(--text-2xl); line-height: var(--text-2xl--line-height); font-weight: 600; }
+@utility heading-6 { font-size: var(--text-xl); line-height: var(--text-xl--line-height); font-weight: 600; }
+@utility title-2 { font-size: var(--text-lg); line-height: var(--text-lg--line-height); font-weight: 500; }
+@utility title-3 { font-size: var(--text-base); line-height: var(--text-base--line-height); font-weight: 500; }
+@utility title-4 { font-size: var(--text-sm); line-height: var(--text-sm--line-height); font-weight: 500; }
+@utility body-3 { font-size: var(--text-base); line-height: var(--text-base--line-height); font-weight: 400; }
+@utility body-5 { font-size: var(--text-sm); line-height: var(--text-sm--line-height); font-weight: 500; }
+@utility body-6 { font-size: var(--text-sm); line-height: var(--text-sm--line-height); font-weight: 400; }
+@utility button-md { font-size: var(--text-base); line-height: var(--text-base--line-height); font-weight: 600; }
+@utility button-sm { font-size: var(--text-sm); line-height: var(--text-sm--line-height); font-weight: 600; }
+@utility caption-3 { font-size: var(--text-xs); line-height: var(--text-xs--line-height); font-weight: 600; }
+@utility caption-4 { font-size: var(--text-xs); line-height: var(--text-xs--line-height); font-weight: 500; }
+@utility caption-5 { font-size: var(--text-xs); line-height: var(--text-xs--line-height); font-weight: 400; }
+
+@layer base {
+  html { color-scheme: dark; }
+  body {
+    background: var(--color-base);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 { text-wrap: balance; }
+  p { text-wrap: pretty; }
+  ::selection { background: var(--color-accent); color: var(--color-accent-ink); }
+  :focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+}
+
+.skip-link {
+  position: absolute; left: 16px; top: -64px; z-index: 50;
+  background: var(--color-accent); color: var(--color-accent-ink);
+  padding: 8px 12px; border-radius: 8px; font-weight: 600;
+  transition: transform 300ms var(--ease-base);
+}
+.skip-link:focus { transform: translateY(80px); }
+
+/* Skeleton pulse for loading states (no spinners, flat fill). */
+.skeleton { background: var(--color-field); animation: pulse 1.6s var(--ease-base) infinite alternate; }
+@keyframes pulse { from { opacity: 1; } to { opacity: 0.45; } }
+.pulse-accent { animation: pulse 1.6s var(--ease-base) infinite alternate; }
+
+.rise-in { animation: rise-in 600ms var(--ease-base) both; }
+@keyframes rise-in { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+
+input[type="range"].scrub { accent-color: var(--color-accent); }
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton, .pulse-accent { animation: none; }
+  .rise-in { animation: fade-in 300ms linear both; }
+  @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+  .skip-link { transition: none; }
+}
