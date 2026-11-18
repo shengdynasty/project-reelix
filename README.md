@@ -3,7 +3,7 @@
 Type a topic or a question, or upload notes, slides, a PDF or a spreadsheet, and watch a narrated, animated
 explanation of it. Everything runs in the browser: no account, no API key, no server, no cost.
 
-Live demo: coming soon.
+Live demo: https://shengdynasty.github.io/project-reelix/
 
 It is built for understanding a topic, not for producing content. A video is as long as its content needs
 (about 30 seconds to 3 minutes, set by the Detail setting) and ends with one short "in short" line.
@@ -81,14 +81,13 @@ Useful scripts:
 npx tsx scripts/plan-topics.ts "black holes" quick       # storyboard for a topic, from live Wikipedia (cached)
 npx tsx scripts/plan-topics.ts "notes:Your text here"    # storyboard for typed notes
 node scripts/build-icons.mjs                              # regenerate src/motion/icons.json
-node scripts/deploy-to-site.mjs                           # build and copy into ~/cool-website/public/reelix
 ```
 
-## Deploying to sheng-yan.com
+## Deploying
 
-The site is a static Next.js export on GitHub Pages. `scripts/deploy-to-site.mjs` builds this app with the
-`/reelix/` base path and copies it to `public/reelix/` in the site repo. Commit that folder there and
-push to publish.
+Every push to `main` runs `.github/workflows/pages.yml`: it installs, runs the tests, builds with the
+`/project-reelix/` base path and publishes `dist/` to GitHub Pages at https://shengdynasty.github.io/project-reelix/.
+The site is static, so the demo costs nothing to host.
 
 The voice workers are single threaded on purpose. Multi threaded WebAssembly needs cross origin isolation
 headers, and in testing the threaded runtime stalled between runs in the bundled build. Several single
