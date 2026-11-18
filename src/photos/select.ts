@@ -62,7 +62,8 @@ export function plainText(html: string): string {
 
 /**
  * How well `c` shows `sentence`: two points per content word they share, one for a sharp picture, less 1.5 for a
- * flag, a logo, a map (unless the scene is about a place) or a portrait of someone the scene does not name.
+ * flag, a logo, a map (unless the scene is about a place) or a portrait of someone the scene does not name, and
+ * twice that for a PNG.
  * -Infinity when it cannot be used at all: an odd shape, too small, a drawing, or nothing in common with the sentence.
  */
 export function scorePhoto(c: PhotoCandidate, sentence: string, opts: { place: boolean; people: string[] }): number {
@@ -78,6 +79,8 @@ export function scorePhoto(c: PhotoCandidate, sentence: string, opts: { place: b
   if (/\blogo\b/.test(title)) penalties++
   if (/\bmap\b/.test(title) && !opts.place) penalties++
   if (/\b(portrait|headshot)\b/.test(title) && !opts.people.some((p) => title.includes(p.toLowerCase()))) penalties++
+  // A PNG is most often a labelled drawing or a screenshot; a real photo of the same thing should win.
+  if (/\.png(\?|$)/i.test(c.url)) penalties += 2
   return overlap * 2 + (c.width >= SHARP_WIDTH ? 1 : 0) - penalties * PENALTY
 }
 

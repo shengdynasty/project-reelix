@@ -54,6 +54,8 @@ describe('scorePhoto', () => {
   it('rises with the words it shares with the sentence', () =>
     expect(scorePhoto(photo(), sentence, opts)).toBeGreaterThan(scorePhoto(photo({ title: 'Galaxy', description: 'A spiral galaxy' }), sentence, opts)))
   it('prefers a picture at least 1200 px wide', () => expect(scorePhoto(photo(), sentence, opts)).toBeGreaterThan(scorePhoto(photo({ width: 800, height: 500 }), sentence, opts)))
+  it('marks a PNG down twice, since PNGs are mostly drawings and screenshots', () =>
+    expect(scorePhoto(photo({ url: 'https://upload.wikimedia.org/thumb/a.png/1280px-a.png' }), sentence, opts)).toBeCloseTo(scorePhoto(photo(), sentence, opts) - 3, 6))
   it('marks down flags, logos, maps and portraits of people the scene does not name', () => {
     const base = scorePhoto(photo(), sentence, opts)
     expect(scorePhoto(photo({ title: 'Flag of black hole accretion disk' }), sentence, opts)).toBeLessThan(base)
