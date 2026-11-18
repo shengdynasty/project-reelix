@@ -212,12 +212,12 @@ describe('set pieces A: compare', () => {
   const p = piece('compare')
   const shot = shotsOf(p)[0]
   const pillars = p.actors.filter((a) => a.data.kind === 'bars')
-  it('stands two pillars scaled by value, each rising on its pop', () => {
+  it('stands two pillars of one width, their heights scaled by value against a shared peak, each rising on its pop', () => {
     expect(pillars.map((a) => a.data)).toEqual([
-      { kind: 'bars', values: [450], categories: [''], highlight: null },
-      { kind: 'bars', values: [700], categories: [''], highlight: null },
+      { kind: 'bars', values: [450], categories: [''], highlight: null, peak: 700 },
+      { kind: 'bars', values: [700], categories: [''], highlight: null, peak: 700 },
     ])
-    expect(pillars[0].scale / pillars[1].scale).toBeCloseTo(450 / 700, 6)
+    expect(pillars.map((a) => a.scale)).toEqual([1, 1])
     pillars.forEach((a, k) => expect(enterOf(a).t).toBe(shot.t0 + COMPARE_POP[k] - 60))
     expect(p.heroId).toBe(pillars[0].id)
   })

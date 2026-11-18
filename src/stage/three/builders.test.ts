@@ -159,6 +159,10 @@ describe('with a 2D canvas', () => {
     expect([copy.width, copy.height]).toEqual([1200, 800])
     expect((photo.geometry as PlaneGeometry).parameters.width).toBeCloseTo(4.5)
   })
+  it('draws a bar against the given peak rather than its own value', () => {
+    const o = buildActor(actor('4:bars:0', { kind: 'bars', values: [350], categories: [''], highlight: null, peak: 700 }), deps)
+    expect(o.children.find((c) => c.userData.column === 0)!.userData.baseY).toBeCloseTo(0.75)
+  })
   it('keeps a portrait photo upright in its own aspect, fitted inside the frame box', () => {
     const image = document.createElement('canvas')
     image.width = 300

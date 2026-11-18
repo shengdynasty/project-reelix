@@ -18,6 +18,8 @@ const WEAK_TAIL = new Set(
 )
 
 const TRAILING_PUNCT = /[,.;:!?]+$/
+/** An ordinal or linking word that opens a sentence ("First,", "Next", "Finally,"): it orders the item, it never names it. */
+const LEAD_LINK = /^(first|firstly|second|secondly|third|then|next|finally|lastly|also|however|meanwhile)\b,?\s+/i
 /** A token ending in closing punctuation is cut off from the word after it ("1905," before "Einstein"). */
 const CLOSES = /[,.;:!?)\]"”]$/
 
@@ -71,7 +73,8 @@ function phraseEndingAt(tokens: string[], end: number): number[] {
  * nothing is left, so the object carries no label and the captions do the work.
  */
 export function labelFor(sentence: string, topicWords: string[]): string | null {
-  const tokens = sentence.trim().split(/\s+/)
+  sentence = sentence.trim().replace(LEAD_LINK, '')
+  const tokens = sentence.split(/\s+/)
   const topics = topicWords.map((w) => w.toLowerCase())
   const isTopic = (w: string) => topics.some((t) => w === t || (w.startsWith(t) && t.length >= 4) || (t.startsWith(w) && w.length >= 4))
   const head = topicalWord(sentence)

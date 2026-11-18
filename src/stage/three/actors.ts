@@ -178,11 +178,11 @@ function categoryLabels(categories: string[], xs: number[], pitch: number, z: nu
 
 const peak = (values: number[]) => Math.max(...values.map(Math.abs), 0) || 1
 
-/** Rounded pillars from the base line, the tallest BAR_MAX_HEIGHT. With a highlight the other bars go muted and stop glowing. */
+/** Rounded pillars from the base line, the tallest (or a bar at `peak`) BAR_MAX_HEIGHT. With a highlight the other bars go muted and stop glowing. */
 function barsObject(data: Data<'bars'>, palette: StagePalette): Group {
   const group = new Group()
   const n = data.values.length
-  const max = peak(data.values)
+  const max = data.peak ?? peak(data.values)
   const xs = data.values.map((_, i) => (i - (n - 1) / 2) * BAR_PITCH)
   data.values.forEach((v, i) => {
     const h = Math.max(BAR_MIN_HEIGHT, (Math.abs(v) / max) * BAR_MAX_HEIGHT)

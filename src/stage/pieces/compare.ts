@@ -1,4 +1,4 @@
-// The compare piece: two pillars scaled by value rise one after the other on the pops, their values on top and their
+// The compare piece: two pillars of one width, their heights scaled by value, rise one after the other on the pops, their values on top and their
 // names below; the difference lands with the chime, when the bigger pillar lights up, while the camera orbits the pair.
 import { formatValue } from '../../input/numbers'
 import type { Unit } from '../../model/storyboard'
@@ -11,9 +11,9 @@ import { actorId, enter, framePiece, genericPiece, labelActor, type PieceContext
 
 /** The pillars stand at x -PILLAR_X and PILLAR_X. */
 const PILLAR_X = 2
-/** A lone bar is this tall at scale 1 (three.js builders); the taller pillar stands at scale 1. */
+/** The taller pillar is this tall (the three.js builders' tallest bar); the other stands against the same peak. */
 const BAR_HEIGHT = 3
-/** The shorter pillar keeps at least this share of the taller one's scale, so it never becomes a sliver. */
+/** The shorter pillar keeps at least this share of the taller one's height, so it never becomes a sliver. */
 const PILLAR_MIN = 0.2
 /** A value label floats this far above its pillar; the names hang under the base line; the difference tops the piece. */
 const VALUE_RISE = 0.35
@@ -55,12 +55,14 @@ export function comparePiece(ctx: PieceContext): SetPiece {
   const bigger = Math.abs(v.right.value) >= Math.abs(v.left.value) ? 1 : 0
   // The bigger pillar lights up as the difference lands, like the 2D compare's emphasis.
   const highlight: Beat = { t: t0 + COMPARE_DELTA - LEAD, dur: HIGHLIGHT_DUR, action: 'highlight' }
+  // Scaling a whole pillar would shrink its width and depth too, and its volume would overstate the ratio.
+  const share = sides.map((side) => Math.max(PILLAR_MIN, Math.abs(side.value) / max))
   const pillars = sides.map(
     (side, k): ActorSpec => ({
       id: actorId(ctx, 'bars', k),
       at: [k === 0 ? -PILLAR_X : PILLAR_X, 0, 0],
-      scale: Math.max(PILLAR_MIN, Math.abs(side.value) / max),
-      data: { kind: 'bars', values: [side.value], categories: [''], highlight: null },
+      scale: 1,
+      data: { kind: 'bars', values: [Math.abs(side.value) / max >= PILLAR_MIN ? side.value : PILLAR_MIN * max * (side.value < 0 ? -1 : 1)], categories: [''], highlight: null, peak: max },
       beats: [enter(t0 + COMPARE_POP[k] - LEAD), ...(k === bigger ? [highlight] : [])],
     }),
   )
@@ -69,7 +71,7 @@ export function comparePiece(ctx: PieceContext): SetPiece {
     const t = t0 + COMPARE_POP[k] - LEAD
     const name = shortLabel(side.label)
     return [
-      labelActor(ctx, 'value', k, formatValue(side.value, { ...v.unit, word: '' }, v.decimals), 'label', [x, BAR_HEIGHT * pillars[k].scale + VALUE_RISE, 0], [enter(t)]),
+      labelActor(ctx, 'value', k, formatValue(side.value, { ...v.unit, word: '' }, v.decimals), 'label', [x, BAR_HEIGHT * share[k] + VALUE_RISE, 0], [enter(t)]),
       ...(name ? [labelActor(ctx, 'name', k, name, 'label', [x, NAME_Y, 0], [enter(t)])] : []),
     ]
   })

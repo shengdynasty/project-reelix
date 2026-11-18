@@ -40,6 +40,22 @@ export interface ExportJob {
 /** How long a saved video waits for a lost graphics context to come back before it finishes in 2D. */
 const RESTORE_WAIT_MS = 2000
 const LOST_NOTE = 'Saved with 2D visuals because the graphics context was lost.'
+const NO_STAGE_NOTE = 'Saved with 2D visuals because the 3D stage could not start.'
+
+/**
+ * The export's own 1920x1080 stage for a 3D video (the preview's stage belongs to the preview), or null with a note
+ * when it cannot be made; never throws, so a failed stage only costs the 3D look.
+ */
+export async function exportStage(want3d: boolean, tier: Tier | undefined): Promise<{ stage: StageHandle | null; note?: string }> {
+  if (!want3d) return { stage: null }
+  try {
+    const stage = await createStageHandle('export', { width: W, height: H }, { tier })
+    if (stage) return { stage }
+  } catch {
+    // A chunk that failed to load or a renderer that failed to start: fall through to 2D.
+  }
+  return { stage: null, note: NO_STAGE_NOTE }
+}
 
 /** True once `stage` has its context back, false if RESTORE_WAIT_MS pass first. */
 async function restored(stage: StageHandle): Promise<boolean> {
@@ -103,11 +119,11 @@ export async function exportVideo(job: ExportJob): Promise<ExportResult> {
   const totalSec = job.plan.total / 1000
   const frames = Math.ceil(totalSec * fps)
   let audioSent = 0
-  // The preview's stage belongs to the preview; a 3D video gets a stage of its own at full size.
-  let stage = job.options.stage ? await createStageHandle('export', { width: W, height: H }, { tier: job.tier }) : null
+  const made = await exportStage(!!job.options.stage, job.tier)
+  let stage = made.stage
   if (import.meta.env.DEV) (window as unknown as { __exportStage: StageHandle | null }).__exportStage = stage
   let options: RenderOptions = { ...job.options, stage }
-  let note: string | undefined
+  let note = made.note
   try {
     for (let f = 0; f < frames; f++) {
       if (job.signal?.aborted) throw new DOMException('Export canceled', 'AbortError')

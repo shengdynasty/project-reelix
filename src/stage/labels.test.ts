@@ -12,6 +12,10 @@ describe('shortLabel', () => {
 })
 
 describe('labelFor', () => {
+  it('skips a leading ordinal or linking word', () => {
+    for (const s of ['First, black holes form when massive stars collapse.', 'Next, water evaporates from the warm ocean.', 'Finally, the vaccine trains the immune system.'])
+      expect(labelFor(s, [])?.split(' ')[0]).not.toMatch(/^(First|Next|Finally)$/)
+  })
   it('names what the icon shows', () => expect(labelFor('The sun drives the cycle by heating water in oceans and lakes.', ['water', 'cycle'])).toBe('Sun'))
   it('keeps the words before it', () =>
     expect(labelFor('General relativity also predicts that every black hole should have a central singularity.', ['black', 'hole'])).toBe('General relativity'))

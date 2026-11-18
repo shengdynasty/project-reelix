@@ -23,6 +23,7 @@ import { loadFonts } from './render/text'
 import { createStageHandle, type StageHandle } from './stage/handle'
 import { renderMode, supportsWebGL2 } from './stage/support'
 import { createWatchdog, deviceProfile, type Tier } from './stage/tiers'
+import { addNote } from './ui/notes'
 
 /** The 3D preview's size on the high tier (the medium tier previews at 960x540). */
 const PREVIEW_SIZE = { width: 1280, height: 720 }
@@ -148,7 +149,7 @@ export default function App() {
     if (tierRef.current === 'high') setTier('medium')
     else {
       setForced2d(true)
-      setNote(SMOOTH_NOTE)
+      setNote((current) => addNote(current, SMOOTH_NOTE))
     }
   }, [])
 

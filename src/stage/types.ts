@@ -20,7 +20,8 @@ export type ActorData =
   | { kind: 'icon'; icon: string; accent: boolean }
   | { kind: 'label'; text: string; size: LabelSize }
   | { kind: 'photo'; imageId: string; fallbackIcon: string; aspect: number }
-  | { kind: 'bars'; values: number[]; categories: string[]; highlight: number | null }
+  /** `peak`: the value the tallest possible bar stands for (default: the largest of `values`), so separate bars share one scale. */
+  | { kind: 'bars'; values: number[]; categories: string[]; highlight: number | null; peak?: number }
   | { kind: 'ribbon'; values: number[]; categories: string[]; highlight: number | null }
   | { kind: 'pictogram'; lit: number; total: 100 }
   | { kind: 'tower'; count: number; icon: string }
