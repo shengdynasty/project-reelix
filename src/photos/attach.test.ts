@@ -41,7 +41,9 @@ describe('attachPhotos', () => {
   })
   it('puts a photo on the title and definition scenes with a credit line, and lists each credit in the sources', async () => {
     sources([photo(1), photo(2)])
-    const out = await attachPhotos(fixtureStoryboard(), { article: 'Diffuse sky radiation', searchScenes: true, load })
+    const sb = fixtureStoryboard()
+    sb.title = 'Sunlight'
+    const out = await attachPhotos(sb, { article: 'Diffuse sky radiation', searchScenes: true, load })
     const def = sceneOf(out.storyboard, 'definition').photo!
     expect(def.credit).toMatch(/^Photo: Artist \d, CC BY-SA 4\.0$/)
     expect(sceneOf(out.storyboard, 'title').photo).toBeDefined()
@@ -70,6 +72,12 @@ describe('attachPhotos', () => {
     expect(commons).not.toHaveBeenCalled()
     expect(openverse).not.toHaveBeenCalled()
     expect(off.images).toEqual([])
+  })
+  it("leaves a definition its topic kit's model, and gives the title the photo", async () => {
+    sources([photo(1), photo(2)])
+    const out = await attachPhotos(fixtureStoryboard(), { article: 'Diffuse sky radiation', searchScenes: true, load })
+    expect(sceneOf(out.storyboard, 'definition').photo).toBeUndefined()
+    expect(sceneOf(out.storyboard, 'title').photo).toBeDefined()
   })
   it('leaves a scene that shows a molecule without a photo', async () => {
     sources([photo(1), photo(2)])

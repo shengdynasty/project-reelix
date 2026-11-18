@@ -4,6 +4,7 @@
 import type { IngestedImage } from '../ingest/types'
 import { contentWords } from '../input/parseText'
 import type { Scene, Storyboard } from '../model/storyboard'
+import { kitModel } from '../stage/kits'
 import { labelFor } from '../stage/labels'
 import { assignPhotos, scorePhoto, type PhotoCandidate } from './select'
 import { articlePhotos, commonsPhotos, openversePhotos } from './source'
@@ -43,8 +44,10 @@ function phraseOf(scene: Scene, topicWords: string[]): string {
 
 export async function attachPhotos(sb: Storyboard, opts: AttachOptions): Promise<{ storyboard: Storyboard; images: IngestedImage[] }> {
   const unchanged = { storyboard: sb, images: [] }
-  // A scene showing a molecule keeps it; a photo there would be credited without being seen.
-  const canShow = (s: Scene) => ELIGIBLE.has(s.visual.kind) && !s.molecule
+  // A scene showing a molecule keeps it, and a definition keeps its topic kit's model (the title takes the photo);
+  // a photo there would be credited without being seen.
+  const kitted = (s: Scene) => s.visual.kind === 'definition' && kitModel({ topic: sb.title, sentence: s.narration, term: s.visual.term }) !== null
+  const canShow = (s: Scene) => ELIGIBLE.has(s.visual.kind) && !s.molecule && !kitted(s)
   const eligible = sb.scenes.filter(canShow)
   if (!eligible.length) return unchanged
   const load = opts.load ?? ((url: string) => loadBitmap(url, opts.signal))
