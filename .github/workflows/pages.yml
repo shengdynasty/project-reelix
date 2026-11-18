@@ -25,7 +25,11 @@ jobs:
           node-version: 24
           cache: npm
 
+      # onnxruntime-node (a Node-only dependency of transformers.js) downloads CUDA binaries on Linux x64 at install,
+      # which 404s; the browser build never uses it.
       - run: npm ci
+        env:
+          npm_config_onnxruntime_node_install_cuda: skip
       - run: npm test
 
       # Built with the /project-reelix/ base path (vite.config.ts). The ONNX runtime wasm is fetched from jsDelivr at
