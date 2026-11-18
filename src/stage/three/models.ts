@@ -9,6 +9,7 @@ import {
   Group,
   type Material,
   Mesh,
+  type Object3D,
   MeshBasicMaterial,
   RingGeometry,
   SphereGeometry,
@@ -23,8 +24,8 @@ import { solidMaterial, type StagePalette } from './materials'
 
 export const MODEL_NAMES: ModelName[] = ['black-hole', 'galaxy', 'planet', 'star', 'volcano', 'water-cycle', 'strata', 'cell', 'dna', 'virus', 'antibody', 'prism', 'scatter']
 
-/** How a part moves with time (see the stage's model poses): a turn about y, a turn about z, or a drift down. */
-export type ModelMotion = 'spin' | 'roll' | 'fall'
+/** How a part moves with time (moveModel): a steady turn about y, a steady turn in its own plane (z), a sway, or a drift down. */
+export type ModelMotion = 'spin' | 'twirl' | 'roll' | 'fall'
 
 const GOLDEN = Math.PI * (3 - Math.sqrt(5))
 
@@ -57,7 +58,7 @@ const BUILDERS: Record<ModelName, (p: StagePalette) => Group> = {
   'black-hole': (p) => {
     const g = new Group()
     g.add(mesh(new SphereGeometry(0.2, 32, 16), new MeshBasicMaterial({ color: '#000000' })))
-    const disk = mesh(new RingGeometry(0.25, 0.52, 64, 2), glow(p), [0, 0, 0], 'spin')
+    const disk = mesh(new RingGeometry(0.25, 0.52, 64, 2), glow(p), [0, 0, 0], 'twirl')
     ;(disk.material as Material).side = DoubleSide
     disk.rotation.x = -Math.PI * 0.42
     g.add(disk)
@@ -201,11 +202,52 @@ const BUILDERS: Record<ModelName, (p: StagePalette) => Group> = {
   },
 }
 
+/** Keeps a model's moving parts at their built pose, which moveModel offsets, inside an outer group the stage poses. */
+function wrap(inner: Group, name: string): Group {
+  inner.traverse((o) => {
+    if (o.userData.motion) o.userData.base = { ry: o.rotation.y, rz: o.rotation.z, py: o.position.y }
+  })
+  const outer = new Group()
+  outer.add(inner)
+  outer.userData.model = name
+  return outer
+}
+
 /** The model `name` built for `palette`, centred at the origin inside the unit box. */
 export function buildModel(name: ModelName, palette: StagePalette): Group {
-  const g = BUILDERS[name](palette)
-  g.userData.model = name
-  return g
+  return wrap(BUILDERS[name](palette), name)
+}
+
+/** Radians a second for a turn, how far and how fast a sway goes, and how fast and far rain drifts down. */
+const SPIN_RATE = 0.6
+const SWAY = 0.15
+const SWAY_HZ = 0.25
+const FALL_RATE = 0.25
+const FALL_SPAN = 0.18
+/** Reduced motion keeps the movement, slower. */
+const CALM = 0.3
+
+/** Poses a model's moving parts at time `t` ms from their built pose alone, so any frame can be drawn in any order. */
+export function moveModel(model: Object3D, t: number, reducedMotion: boolean): void {
+  const s = (t / 1000) * (reducedMotion ? CALM : 1)
+  model.traverse((o) => {
+    const base = o.userData.base as { ry: number; rz: number; py: number } | undefined
+    if (!base) return
+    switch (o.userData.motion as ModelMotion) {
+      case 'spin':
+        o.rotation.y = base.ry + SPIN_RATE * s
+        break
+      case 'twirl':
+        o.rotation.z = base.rz + SPIN_RATE * s
+        break
+      case 'roll':
+        o.rotation.z = base.rz + SWAY * Math.sin(2 * Math.PI * SWAY_HZ * s)
+        break
+      case 'fall':
+        o.position.y = base.py - ((FALL_RATE * s) % FALL_SPAN)
+        break
+    }
+  })
 }
 
 /** Atoms fill a sphere this wide, so the longest molecule still fits the unit box with its balls. */
@@ -227,7 +269,6 @@ export function buildMolecule(mol: Molecule, palette: StagePalette): Group {
   const colour = (e: string) => (e === 'H' ? palette.ink : e === 'C' ? palette.object : e === 'O' ? series(palette, 3) : e === 'N' ? series(palette, 0) : palette.accent)
   mol.atoms.forEach((a, i) => g.add(mesh(new SphereGeometry(Math.min(ball(a.element), 0.55 - MOLECULE_RADIUS), 16, 8), solidMaterial(colour(a.element)), at[i].toArray() as [number, number, number])))
   for (const b of mol.bonds) g.add(rod(at[b.a], at[b.b], 0.012 * b.order + 0.008, solidMaterial(palette.muted)))
-  g.userData.model = 'molecule'
-  return g
+  return wrap(g, 'molecule')
 }
 

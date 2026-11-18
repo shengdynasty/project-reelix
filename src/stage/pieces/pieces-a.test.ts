@@ -34,10 +34,10 @@ describe('set pieces A', () => {
   it('stat: a percent lights 42 of 100 cells', () =>
     expect(piece('stat').actors.find((a) => a.data.kind === 'pictogram')!.data).toEqual({ kind: 'pictogram', lit: 42, total: 100 }))
   it('image: shows the photo when it exists', () => expect(piece('image').actors.some((a) => a.data.kind === 'photo')).toBe(true))
-  it('image: falls back to an icon when the photo is missing', () => {
+  it("image: falls back to the scene's hero (here the sky kit's model) when the photo is missing", () => {
     const p = directVideo(plan, { hasImage: () => false }).pieces.find((x) => x.kind === 'image')!
     expect(p.actors.some((a) => a.data.kind === 'photo')).toBe(false)
-    expect(p.actors.some((a) => a.data.kind === 'icon')).toBe(true)
+    expect(heroOf(p).data).toEqual({ kind: 'model', model: 'scatter' })
   })
   it('definition: the term lands with the second pop', () => {
     const p = piece('definition')
@@ -83,9 +83,9 @@ describe('set pieces A: title', () => {
     expect(hero.data).toEqual({ kind: 'photo', imageId: 'img1', fallbackIcon: shot.icon, aspect: 16 / 9 })
     expect(enterOf(hero).t).toBe(shot.t0)
   })
-  it('falls back to the scene icon when no photo is available', () => {
+  it("falls back to the topic kit's model when no photo is available", () => {
     const hero = heroOf(pieceOf(plan, 'intro', () => false))
-    expect(hero.data).toEqual({ kind: 'icon', icon: shot.icon, accent: true })
+    expect(hero.data).toEqual({ kind: 'model', model: 'scatter' })
   })
   it('shows the title as a title label landing with the title words', () => {
     const title = labels(p).find((a) => a.data.kind === 'label' && a.data.size === 'title')!
@@ -100,6 +100,22 @@ describe('set pieces A: title', () => {
   })
 })
 
+describe('set pieces A: kit models', () => {
+  const sb = fixtureStoryboard()
+  const at = sb.scenes.findIndex((x) => x.id === 'definition')
+  const blackHole = { ...sb.scenes[at], narration: 'A black hole is a region where gravity is so strong that nothing escapes.', visual: { kind: 'definition' as const, term: 'Black hole', link: 'is', meaning: 'a region where nothing escapes' } }
+  it("puts the kit's model in place of the icon when the scene calls for one", () =>
+    expect(heroOf(pieceOf(planWith(blackHole, at), 'definition')).data).toEqual({ kind: 'model', model: 'black-hole' }))
+  it('lets a photo win over a model', () =>
+    expect(heroOf(pieceOf(planWith({ ...blackHole, photo: { imageId: 'web1', credit: 'Photo: X, CC0' } }, at), 'definition')).data.kind).toBe('photo'))
+  it('keeps the icon when no kit fits', () => {
+    const plain = { ...sb.scenes[at], narration: 'A treaty is a written agreement between states.', visual: { kind: 'definition' as const, term: 'Treaty', link: 'is', meaning: 'a written agreement between states' } }
+    const custom = planWith(plain, at)
+    custom.storyboard.title = 'Treaties'
+    expect(heroOf(pieceOf(custom, 'definition')).data.kind).toBe('icon')
+  })
+})
+
 describe('set pieces A: scene photos', () => {
   const sb = fixtureStoryboard()
   const withPhoto = (id: string) => ({ ...sb.scenes.find((x) => x.id === id)!, photo: { imageId: 'web1', credit: 'Photo: Jane Doe, CC BY 4.0' } })
@@ -110,9 +126,9 @@ describe('set pieces A: scene photos', () => {
     expect(hero.data).toMatchObject({ kind: 'photo', imageId: 'web1' })
     labels(p).forEach((a) => expect(a.at[1]).toBeLessThan(hero.at[1] - 1.5))
   })
-  it('keeps the icon when the photo did not load', () => {
+  it('falls back to the scene hero without the photo when it did not load', () => {
     const at = sb.scenes.findIndex((x) => x.id === 'definition')
-    expect(heroOf(pieceOf(planWith(withPhoto('definition'), at), 'definition', () => false)).data.kind).toBe('icon')
+    expect(heroOf(pieceOf(planWith(withPhoto('definition'), at), 'definition', () => false)).data.kind).toBe('model')
   })
   it("opens on the title scene's own photo", () => {
     const at = sb.scenes.findIndex((x) => x.id === 'title')
@@ -123,8 +139,8 @@ describe('set pieces A: scene photos', () => {
 describe('set pieces A: definition', () => {
   const p = piece('definition')
   const shot = shotsOf(p)[0]
-  it('has the icon hero entering with the first pop', () => {
-    expect(heroOf(p).data).toEqual({ kind: 'icon', icon: shot.icon, accent: true })
+  it("has the sky kit's model as its hero, entering with the first pop", () => {
+    expect(heroOf(p).data).toEqual({ kind: 'model', model: 'scatter' })
     expect(enterOf(heroOf(p)).t).toBe(shot.t0)
   })
   it('shortens the term and names what it is in a small label', () => {

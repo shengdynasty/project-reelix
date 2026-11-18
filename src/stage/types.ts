@@ -1,3 +1,4 @@
+import type { ModelName } from './kits'
 import type { ShotKind } from '../motion/plan'
 
 export type Vec3 = [number, number, number]
@@ -18,6 +19,8 @@ export interface Beat {
 
 export type ActorData =
   | { kind: 'icon'; icon: string; accent: boolean }
+  /** A topic kit's procedural model in place of an icon (same unit box). */
+  | { kind: 'model'; model: ModelName }
   | { kind: 'label'; text: string; size: LabelSize }
   | { kind: 'photo'; imageId: string; fallbackIcon: string; aspect: number }
   /** `peak`: the value the tallest possible bar stands for (default: the largest of `values`), so separate bars share one scale. */

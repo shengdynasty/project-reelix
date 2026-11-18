@@ -3,7 +3,7 @@
 import { INTRO_TITLE_START } from '../../motion/beats'
 import { shortLabel } from '../labels'
 import type { SetPiece, Vec3 } from '../types'
-import { enter, framePiece, labelActor, pictureHero, scenePhoto, type PieceContext } from './kit'
+import { enter, framePiece, heroFor, labelActor, scenePhoto, type PieceContext } from './kit'
 
 /** Only the title may run to this many words. */
 const TITLE_WORDS = 8
@@ -30,7 +30,7 @@ function leadPhoto(ctx: PieceContext): string | undefined {
 export function introPiece(ctx: PieceContext): SetPiece {
   const shot = ctx.shots[0]
   const v = ctx.scene.visual
-  const hero = pictureHero(ctx, scenePhoto(ctx) ?? leadPhoto(ctx), shot.icon, HERO_AT, shot.t0)
+  const hero = heroFor(ctx, shot.icon, HERO_AT, shot.t0, scenePhoto(ctx) ?? leadPhoto(ctx))
   const text = titleText(v.kind === 'title' ? v.title : ctx.plan.storyboard.title)
   const title = text ? [labelActor(ctx, 'title', 0, text, 'title', TITLE_AT, [enter(shot.t0 + INTRO_TITLE_START)], TITLE_SCALE)] : []
   return framePiece(ctx, hero, title, AIM)

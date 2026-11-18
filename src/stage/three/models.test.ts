@@ -3,7 +3,7 @@ import { Box3, Mesh, Vector3 } from 'three'
 import { THEMES } from '../../render/theme'
 import type { ModelName } from '../kits'
 import { stagePalette } from './materials'
-import { MODEL_NAMES, buildModel, buildMolecule } from './models'
+import { MODEL_NAMES, buildModel, buildMolecule, moveModel } from './models'
 
 const palette = stagePalette(THEMES.night)
 const meshes = (name: ModelName) => {
@@ -50,6 +50,31 @@ describe('buildMolecule', () => {
     const box = new Box3().setFromObject(o)
     for (const c of [...box.min.toArray(), ...box.max.toArray()]) expect(Math.abs(c)).toBeLessThanOrEqual(0.56)
     expect(box.getSize(new Vector3()).length()).toBeGreaterThan(0.6)
+  })
+})
+
+describe('moveModel', () => {
+  const state = (o: ReturnType<typeof buildModel>) => {
+    const out: number[] = []
+    o.traverse((c) => out.push(c.rotation.y, c.rotation.z, c.position.y))
+    return out
+  }
+  it.each(MODEL_NAMES)('poses %s from t alone, so a frame is the same reached in order or directly', (name) => {
+    const direct = buildModel(name, palette)
+    moveModel(direct, 5000, false)
+    const stepped = buildModel(name, palette)
+    for (const t of [0, 1200, 3100, 5000]) moveModel(stepped, t, false)
+    expect(state(stepped)).toEqual(state(direct))
+  })
+  it('moves something on a spinning model, less under reduced motion, and leaves its outer group to the stage', () => {
+    const full = buildModel('black-hole', palette)
+    const calm = buildModel('black-hole', palette)
+    moveModel(full, 2000, false)
+    moveModel(calm, 2000, true)
+    const turn = (o: ReturnType<typeof buildModel>) => Math.max(...state(o).map(Math.abs))
+    expect(turn(full)).toBeGreaterThan(turn(calm))
+    expect(turn(calm)).toBeGreaterThan(0)
+    expect([full.rotation.y, full.position.y]).toEqual([0, 0])
   })
 })
 

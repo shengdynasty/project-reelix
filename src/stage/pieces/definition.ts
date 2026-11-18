@@ -1,8 +1,8 @@
-// The definition piece: the hero icon (or the scene's photo) pops in, the term lands with the second pop and a small label names what it
+// The definition piece: the hero (the scene's photo, its kit's model or its icon) pops in, the term lands with the second pop and a small label names what it
 // is; the full meaning stays in the captions.
 import { labelFor, shortLabel } from '../labels'
 import type { SetPiece, Vec3 } from '../types'
-import { enter, framePiece, genericPiece, labelActor, pictureHalfHeight, pictureHero, scenePhoto, type PieceContext } from './kit'
+import { enter, framePiece, genericPiece, heroFor, labelActor, pictureHalfHeight, type PieceContext } from './kit'
 
 const HERO_AT: Vec3 = [0, 1, 0]
 /** The term hangs this far under the hero's bottom edge, and the small label this far under the term. */
@@ -18,7 +18,7 @@ export function definitionPiece(ctx: PieceContext): SetPiece {
   const v = ctx.scene.visual
   if (v.kind !== 'definition') return genericPiece(ctx)
   const shot = ctx.shots[0]
-  const hero = pictureHero(ctx, scenePhoto(ctx), shot.icon, HERO_AT, shot.t0)
+  const hero = heroFor(ctx, shot.icon, HERO_AT, shot.t0)
   const termY = HERO_AT[1] - pictureHalfHeight(hero) - TERM_GAP
   const term = shortLabel(v.term)
   const meaning = labelFor(v.meaning, ctx.topicWords)

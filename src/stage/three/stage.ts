@@ -40,6 +40,7 @@ import { actorPose, columnRise } from '../pose'
 import type { ActorData, ActorSpec, Beat, SetPiece, StageSet } from '../types'
 import { activePieces } from '../window'
 import { applyPose, buildActor, type BuildDeps } from './actors'
+import { moveModel } from './models'
 import { createFx, type Fx } from './fx'
 import type { StagePalette } from './materials'
 
@@ -253,7 +254,7 @@ function drift(object: Object3D, data: ParticleData, t: number): void {
   attribute.needsUpdate = true
 }
 
-function poseActor(actor: BuiltActor, group: Group, t: number, deps: BuildDeps): void {
+function poseActor(actor: BuiltActor, group: Group, t: number, deps: BuildDeps, reducedMotion: boolean): void {
   const pose = actorPose(actor.spec, t)
   if (actor.count) {
     const k = countCurve(pose.progress, actor.count.dur)
@@ -273,6 +274,7 @@ function poseActor(actor: BuiltActor, group: Group, t: number, deps: BuildDeps):
   applyPose(actor.object, pose)
   if (actor.rise) riseColumns(actor.object, actor.rise, t)
   if (actor.spec.data.kind === 'particles') drift(actor.object, actor.spec.data, t)
+  if (actor.spec.data.kind === 'model') moveModel(actor.object, t, reducedMotion)
 }
 
 function build({ width, height, quality, reducedMotion = false, depthOfField = true }: StageOptions): Stage | null {
@@ -381,7 +383,7 @@ function build({ width, height, quality, reducedMotion = false, depthOfField = t
       built.delete(index)
     }
     for (const index of active) if (!built.has(index)) built.set(index, buildPiece(set.pieces[index], deps, scene))
-    for (const piece of built.values()) for (const actor of piece.actors) poseActor(actor, piece.group, t, deps)
+    for (const piece of built.values()) for (const actor of piece.actors) poseActor(actor, piece.group, t, deps, reducedMotion)
 
     const pose = cameraPose(set, t, { reducedMotion })
     camera.position.set(pose.position[0], pose.position[1], pose.position[2])

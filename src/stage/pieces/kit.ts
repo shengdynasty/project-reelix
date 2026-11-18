@@ -5,6 +5,8 @@ import type { Scene } from '../../model/storyboard'
 import type { MotionPlan, Shot } from '../../motion/plan'
 import type { WordTiming } from '../../motion/words'
 import { cameraKey, defaultCameraKeys, holdWindow } from '../camera'
+import { kitModel } from '../kits'
+import { verbBeats } from '../kits/verbs'
 import { pieceWindow } from '../timing'
 import type { ActorSpec, Beat, CameraKey, LabelSize, SetPiece, Vec3 } from '../types'
 
@@ -62,7 +64,20 @@ export function pictureHero(ctx: PieceContext, imageId: string | undefined, icon
 /** The scene's own online photo when it loaded, for pictureHero. */
 export const scenePhoto = (ctx: PieceContext): string | undefined => (ctx.scene.photo && ctx.hasImage(ctx.scene.photo.imageId) ? ctx.scene.photo.imageId : undefined)
 
-/** Half the height of a hero made by pictureHero. */
+/**
+ * A piece's single hero: the photo when there is one (the scene's own unless `photo` is given), else the model its
+ * topic kit calls for, acting on the verbs the narration says, else the icon; entering at `t`.
+ */
+export function heroFor(ctx: PieceContext, icon: string, at: Vec3, t: number, photo: string | undefined = scenePhoto(ctx)): ActorSpec {
+  if (photo) return pictureHero(ctx, photo, icon, at, t)
+  const v = ctx.scene.visual
+  const model = kitModel({ topic: ctx.plan.storyboard.title, sentence: ctx.scene.narration, term: v.kind === 'definition' ? v.term : undefined })
+  if (!model) return iconActor(ctx, 'icon', 0, icon, at, HERO_SCALE, [enter(t)])
+  const end = ctx.shots[ctx.shots.length - 1].end
+  return { id: actorId(ctx, 'model'), at, scale: HERO_SCALE, data: { kind: 'model', model }, beats: [enter(t), ...verbBeats(ctx.words, t + ENTER, end)] }
+}
+
+/** Half the height of a hero made by pictureHero or heroFor. */
 export const pictureHalfHeight = (hero: ActorSpec) => (hero.data.kind === 'photo' ? PHOTO_HEIGHT / 2 : HERO_SCALE / 2)
 
 /** The particles every piece gets: a sparse stream through its volume, seeded by the piece, so something is always alive. */
