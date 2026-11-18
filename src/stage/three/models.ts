@@ -28,6 +28,8 @@ export const MODEL_NAMES: ModelName[] = ['black-hole', 'galaxy', 'planet', 'star
 export type ModelMotion = 'spin' | 'twirl' | 'roll' | 'fall'
 
 const GOLDEN = Math.PI * (3 - Math.sqrt(5))
+/** In the optics models the colour is the content (blue scatters, red passes, a prism spreads a spectrum), so they keep it on every theme. */
+const LIGHT = { sun: '#fff1b8', blue: '#4c8dff', red: '#ff5a3c', spectrum: ['#ff4d4d', '#ff9f1c', '#ffe14d', '#3ddc84', '#4c8dff', '#9b5cff'] }
 
 function mesh(geometry: Mesh['geometry'], material: Material, at: [number, number, number] = [0, 0, 0], motion?: ModelMotion): Mesh {
   const m = new Mesh(geometry, material)
@@ -207,22 +209,22 @@ const BUILDERS: Record<ModelName, (p: StagePalette) => Group> = {
     glass.rotation.x = Math.PI / 2
     g.add(glass)
     g.add(rod(new Vector3(-0.54, -0.2, 0), new Vector3(-0.12, 0, 0), 0.015, glow(p, p.ink)))
-    for (let i = 0; i < 5; i++) g.add(rod(new Vector3(0.14, 0, 0), new Vector3(0.54, -0.04 - i * 0.07, 0), 0.014, glow(p, series(p, i))))
+    LIGHT.spectrum.forEach((colour, i) => g.add(rod(new Vector3(0.14, 0, 0), new Vector3(0.54, -0.02 - i * 0.06, 0), 0.014, glow(p, colour))))
     return g
   },
   scatter: (p) => {
     const g = new Group()
-    g.add(mesh(new SphereGeometry(0.11, 16, 8), glow(p), [-0.42, 0.38, 0]))
+    g.add(mesh(new SphereGeometry(0.11, 16, 8), glow(p, LIGHT.sun), [-0.42, 0.38, 0]))
     const air = new Group()
     air.userData.motion = 'spin'
     const molecule = new SphereGeometry(0.035, 12, 8)
     for (let i = 0; i < 9; i++) air.add(mesh(molecule, solidMaterial(p.muted), [-0.15 + (i % 3) * 0.17, -0.05 - Math.floor(i / 3) * 0.17, ((i * 2) % 3) * 0.08 - 0.08]))
     g.add(air)
     // Red passes straight through; blue scatters every way from the air.
-    g.add(rod(new Vector3(-0.34, 0.3, 0), new Vector3(0.54, -0.45, 0), 0.012, glow(p, series(p, 3))))
+    g.add(rod(new Vector3(-0.34, 0.3, 0), new Vector3(0.54, -0.45, 0), 0.012, glow(p, LIGHT.red)))
     for (let i = 0; i < 6; i++) {
       const a = (i / 6) * Math.PI * 2
-      g.add(rod(new Vector3(0.02, -0.22, 0), new Vector3(0.02 + Math.cos(a) * 0.3, -0.22 + Math.sin(a) * 0.3, 0), 0.01, glow(p, series(p, 0))))
+      g.add(rod(new Vector3(0.02, -0.22, 0), new Vector3(0.02 + Math.cos(a) * 0.3, -0.22 + Math.sin(a) * 0.3, 0), 0.01, glow(p, LIGHT.blue)))
     }
     return g
   },
