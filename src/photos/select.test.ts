@@ -49,6 +49,7 @@ describe('scorePhoto', () => {
     expect(scorePhoto(photo({ width: 3000, height: 1000 }), sentence, opts)).toBe(-Infinity)
     expect(scorePhoto(photo({ width: 600, height: 400 }), sentence, opts)).toBe(-Infinity)
     expect(scorePhoto(photo({ title: 'Black hole diagram' }), sentence, opts)).toBe(-Infinity)
+    expect(scorePhoto(photo({ description: 'In the diagram, the black hole lens brightens a star' }), sentence, opts)).toBe(-Infinity)
     expect(scorePhoto(photo({ url: 'https://upload.wikimedia.org/a.svg.png' }), sentence, opts)).toBe(-Infinity)
   })
   it('rises with the words it shares with the sentence', () =>

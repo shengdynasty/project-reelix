@@ -69,7 +69,7 @@ export function plainText(html: string): string {
 export function scorePhoto(c: PhotoCandidate, sentence: string, opts: { place: boolean; people: string[] }): number {
   const aspect = c.width / c.height
   if (!(aspect >= MIN_ASPECT && aspect <= MAX_ASPECT) || c.width < MIN_WIDTH) return -Infinity
-  if (DRAWING.test(c.title) || /\.svg\b/i.test(c.url)) return -Infinity
+  if (DRAWING.test(c.title) || DRAWING.test(c.description) || /\.svg\b/i.test(c.url)) return -Infinity
   const said = new Set(contentWords(sentence))
   const overlap = new Set(contentWords(`${c.title} ${c.description}`).filter((w) => said.has(w))).size
   if (!overlap) return -Infinity
